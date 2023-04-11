@@ -10,6 +10,11 @@ import (
 	"github.com/aattwwss/ssd-bot-go/reddit"
 )
 
+const (
+	SUBREDDIT   = "testingground4bots"
+	LINK_PREFIX = "t3_"
+)
+
 func main() {
 	clientId := os.Getenv("CLIENT_ID")
 	clientSecret := os.Getenv("CLIENT_SECRET")
@@ -21,13 +26,28 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	posts, err := rc.GetNewPosts("buildapcsales", 10)
+	posts, err := rc.GetNewPosts(SUBREDDIT, 10)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	botComments, err := rc.GetBotNewestComments(25)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	botCommentsMap := map[string]bool{}
+	for _, comment := range botComments {
+		linkId := strings.TrimPrefix(comment.LinkID, LINK_PREFIX)
+		botCommentsMap[linkId] = true
+	}
+
 	for _, post := range posts {
 		if !strings.Contains(strings.ToUpper(post.LinkFlairText), "SSD") {
+			continue
+		}
+		_, ok := botCommentsMap[post.ID]
+		if ok {
 			continue
 		}
 		comments, err := rc.GetCommentsByPostId(post.ID, 10)
@@ -39,11 +59,4 @@ func main() {
 		}
 	}
 
-	botComments, err := rc.GetBotNewestComments(100)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, comment := range botComments {
-		fmt.Println(comment.LinkID)
-	}
 }
