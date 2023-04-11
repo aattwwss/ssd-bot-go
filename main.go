@@ -27,15 +27,15 @@ func main() {
 	}
 
 	for _, post := range posts {
-		if !strings.Contains(strings.ToUpper(post.Data.LinkFlairText), "SSD") {
+		if !strings.Contains(strings.ToUpper(post.LinkFlairText), "SSD") {
 			continue
 		}
-		comments, err := rc.GetCommentsByPostId(post.Data.ID, 100)
+		comments, err := rc.GetCommentsByPostId(post.ID, 100)
 		if err != nil {
 			log.Fatal(err)
 		}
 		for _, comment := range comments {
-			fmt.Println(comment.Data.Author)
+			fmt.Println(comment.Author)
 		}
 	}
 }
