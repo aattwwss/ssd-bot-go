@@ -30,6 +30,12 @@ func main() {
 		if !strings.Contains(strings.ToUpper(post.Data.LinkFlairText), "SSD") {
 			continue
 		}
-		fmt.Println(post.Data.ID)
+		comments, err := rc.GetCommentsByPostId(post.Data.ID, 100)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, comment := range comments {
+			fmt.Println(comment.Data.Author)
+		}
 	}
 }
