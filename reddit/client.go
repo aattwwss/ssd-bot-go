@@ -111,6 +111,7 @@ func (rc *RedditClient) RefreshToken() error {
 	return nil
 }
 func (rc *RedditClient) newRequest(method string, url string, body io.Reader) (*http.Request, error) {
+	// TODO add a checkk for token validity here
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err

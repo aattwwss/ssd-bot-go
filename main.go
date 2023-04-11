@@ -21,7 +21,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	posts, err := rc.GetNewPosts("buildapcsales", 100)
+	posts, err := rc.GetNewPosts("buildapcsales", 10)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,12 +30,20 @@ func main() {
 		if !strings.Contains(strings.ToUpper(post.LinkFlairText), "SSD") {
 			continue
 		}
-		comments, err := rc.GetCommentsByPostId(post.ID, 100)
+		comments, err := rc.GetCommentsByPostId(post.ID, 10)
 		if err != nil {
 			log.Fatal(err)
 		}
 		for _, comment := range comments {
 			fmt.Println(comment.Author)
 		}
+	}
+
+	botComments, err := rc.GetBotNewestComments(100)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, comment := range botComments {
+		fmt.Println(comment.LinkID)
 	}
 }

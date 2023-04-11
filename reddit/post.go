@@ -8,25 +8,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Listing[T any] struct {
-	Kind string         `json:"kind"`
-	Data ListingData[T] `json:"data"`
-}
-
-type ListingData[T any] struct {
-	After     string        `json:"after"`
-	Dist      int           `json:"dist"`
-	Modhash   string        `json:"modhash"`
-	GeoFilter string        `json:"geo_filter"`
-	Children  []Children[T] `json:"children"`
-	Before    string        `json:"before"`
-}
-
-type Children[T any] struct {
-	Kind string `json:"kind"`
-	Data T      `json:"data"`
-}
-
 type Post struct {
 	ID            string `json:"id"`
 	Subreddit     string `json:"subreddit"`
@@ -104,6 +85,7 @@ func (rc RedditClient) GetCommentsByPostId(postId string, limit int) ([]PostComm
 		return nil, err
 	}
 	var postComments []PostComment
+	// hardcoding to use the 2nd element as the first is the post information
 	for _, child := range postCommentsListing[1].Data.Children {
 		postComments = append(postComments, child.Data)
 	}
