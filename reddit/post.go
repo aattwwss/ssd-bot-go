@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 )
@@ -90,4 +92,30 @@ func (rc RedditClient) GetCommentsByPostId(postId string, limit int) ([]PostComm
 		postComments = append(postComments, child.Data)
 	}
 	return postComments, nil
+}
+
+func (rc RedditClient) CreateComment(postId, text string) error {
+
+	data := url.Values{}
+	data.Set("api_type", "json")
+	data.Set("text", text)
+	data.Set("thing_id", "t3_"+postId)
+
+	req, err := rc.newRequest("POST", "https://oauth.reddit.com/api/comment", strings.NewReader(data.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if err != nil {
+		log.Error().Msgf("Error creating request: %v", err)
+		return err
+	}
+	resp, err := rc.httpClient.Do(req)
+	if err != nil {
+		log.Error().Msgf("Error sending request: %v", err)
+		return err
+	}
+	if resp.StatusCode/100 != 2 {
+		log.Error().Msgf("Error request: %v", resp.Status)
+		return errors.New("Received non OK status code: " + resp.Status)
+	}
+	defer resp.Body.Close()
+	return nil
 }
