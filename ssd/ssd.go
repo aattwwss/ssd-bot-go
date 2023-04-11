@@ -1,4 +1,4 @@
-package main
+package ssd
 
 import (
 	"fmt"
@@ -32,6 +32,8 @@ type SSD struct {
 	ReadWrite string
 
 	CellRow int
+
+	Capacity string //not used
 }
 
 func (ssd SSD) toMarkdown() string {
