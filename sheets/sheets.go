@@ -43,20 +43,20 @@ func main() {
 		}
 
 		ssd := ssd.SSD{
-			Brand:         getFromSliceSafe(row, 0),
-			Model:         getFromSliceSafe(row, 1),
-			Interface:     getFromSliceSafe(row, 2),
-			FormFactor:    getFromSliceSafe(row, 3),
-			Capacity:      getFromSliceSafe(row, 4),
-			Controller:    getFromSliceSafe(row, 5),
-			Configuration: getFromSliceSafe(row, 6),
-			DRAM:          getFromSliceSafe(row, 7),
-			HMB:           getFromSliceSafe(row, 8),
-			NandBrand:     getFromSliceSafe(row, 9),
-			NandType:      getFromSliceSafe(row, 10),
-			Layers:        getFromSliceSafe(row, 11),
-			ReadWrite:     getFromSliceSafe(row, 12),
-			Category:      getFromSliceSafe(row, 13),
+			Brand:         getStringAtIndexOrEmpty(row, 0),
+			Model:         getStringAtIndexOrEmpty(row, 1),
+			Interface:     getStringAtIndexOrEmpty(row, 2),
+			FormFactor:    getStringAtIndexOrEmpty(row, 3),
+			Capacity:      getStringAtIndexOrEmpty(row, 4),
+			Controller:    getStringAtIndexOrEmpty(row, 5),
+			Configuration: getStringAtIndexOrEmpty(row, 6),
+			DRAM:          getStringAtIndexOrEmpty(row, 7),
+			HMB:           getStringAtIndexOrEmpty(row, 8),
+			NandBrand:     getStringAtIndexOrEmpty(row, 9),
+			NandType:      getStringAtIndexOrEmpty(row, 10),
+			Layers:        getStringAtIndexOrEmpty(row, 11),
+			ReadWrite:     getStringAtIndexOrEmpty(row, 12),
+			Category:      getStringAtIndexOrEmpty(row, 13),
 			CellRow:       i + 1,
 		}
 		allSSD = append(allSSD, ssd)
@@ -64,10 +64,10 @@ func main() {
 	fmt.Println(allSSD)
 }
 
-func getFromSliceSafe(row []interface{}, i int) string {
-	if i >= len(row) {
+func getStringAtIndexOrEmpty(arr []interface{}, i int) string {
+	if i >= len(arr) {
 		return ""
 	}
-	return row[i].(string)
+	return fmt.Sprintf("%v", arr[i])
 
 }
