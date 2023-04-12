@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aattwwss/ssd-bot-go/reddit"
 	"github.com/aattwwss/ssd-bot-go/sheets"
@@ -76,10 +77,13 @@ func main() {
 		return
 	}
 
-	err = run(*config, rc)
-	if err != nil {
-		log.Error().Msgf("Run error: %v", err)
-		return
+	for {
+		err = run(*config, rc)
+		if err != nil {
+			log.Error().Msgf("Run error: %v", err)
+			return
+		}
+		time.Sleep(10 * time.Minute)
 	}
 }
 
@@ -142,6 +146,7 @@ func run(config Config, rc *reddit.RedditClient) error {
 		}
 		_, ok := botCommentsMap[post.ID]
 		if ok {
+			log.Info().Msgf("Already commented on this post: %s", post.Title)
 			continue
 		}
 		log.Info().Msgf("Found post about SSD: %s", post.Title)
@@ -152,10 +157,12 @@ func run(config Config, rc *reddit.RedditClient) error {
 		}
 
 		log.Info().Msgf("Found in database: %v", found)
-		err = rc.SubmitComment("12ez9ws", found.ToMarkdown())
+		// err = rc.SubmitComment("12jiw1n", found.ToMarkdown())
+		err = rc.SubmitComment(post.ID, found.ToMarkdown())
 		if err != nil {
 			return err
 		}
+		time.Sleep(10 * time.Second)
 	}
 	return nil
 }
