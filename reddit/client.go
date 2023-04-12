@@ -63,8 +63,8 @@ func NewRedditClient(clientId, clientSecret, username, password, accessToken str
 func (rc *RedditClient) RefreshToken() error {
 	now := time.Now()
 	durationFromExpire := time.UnixMilli(rc.tokenExpireTimeMilli).Sub(now).Minutes()
-	if durationFromExpire > 10 {
-		log.Info().Msgf("Token is still valid for %v minutes. Refresh limit is 10 minutes.", durationFromExpire)
+	if durationFromExpire > 30 {
+		log.Info().Msgf("Token is still valid for %v minutes. Refresh only with 30 minutes left.", int(durationFromExpire))
 		return nil
 	}
 	// Set the form data
@@ -115,12 +115,21 @@ func (rc *RedditClient) RefreshToken() error {
 	}
 	return nil
 }
+
 func (rc *RedditClient) newRequest(method string, url string, body io.Reader) (*http.Request, error) {
 	// TODO add a checkk for token validity here
+	now := time.Now()
+	durationFromExpire := time.UnixMilli(rc.tokenExpireTimeMilli).Sub(now).Minutes()
+	if durationFromExpire < 30 {
+		log.Info().Msgf("Refreshing access token.")
+		rc.RefreshToken()
+	}
+
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
+
 	req.Header.Add("Authorization", "bearer "+rc.accessToken)
 	req.Header.Add("User-Agent", "SSD bot v1.0 by /u/_SSD_BOT_ github.com/aattwwss/ssd-bot-go")
 	return req, nil
