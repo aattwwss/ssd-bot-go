@@ -71,7 +71,6 @@ func main() {
 	token := os.Getenv("BOT_ACCESS_TOKEN")
 	isDebug := strings.ToUpper(os.Getenv("IS_DEBUG")) == "TRUE"
 
-	log.Info().Msg("Creating config")
 	config, err := newConfig(clientId, clientSecret, username, password, token, expireTimeMilli, isDebug)
 	if err != nil {
 		log.Error().Msgf("Init config error: %v", err)
