@@ -60,7 +60,7 @@ func newConfig(clientId, clientSecret, username, password, token string, expireT
 func main() {
 	expireTimeMilli, err := strconv.ParseInt(os.Getenv("BOT_TOKEN_EXPIRE_MILLI"), 10, 64)
 	if err != nil {
-		log.Info().Msgf("Error parsing expireTimeMilli: %v", err)
+		log.Info().Msgf("Cannot parse expireTimeMilli, setting it to 0.")
 		expireTimeMilli = 0
 	}
 
