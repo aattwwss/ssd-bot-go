@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -70,7 +71,12 @@ func main() {
 	token := os.Getenv("BOT_ACCESS_TOKEN")
 	isDebug := strings.ToUpper(os.Getenv("IS_DEBUG")) == "TRUE"
 
+	log.Info().Msg("Creating config")
 	config, err := newConfig(clientId, clientSecret, username, password, token, expireTimeMilli, isDebug)
+	if err != nil {
+		log.Error().Msgf("Init config error: %v", err)
+		return
+	}
 	rc, err := reddit.NewRedditClient(config.ClientId, config.ClientSecret, config.Username, config.Password, config.Token, config.ExpireTimeMilli, config.IsDebug)
 	if err != nil {
 		log.Error().Msgf("Init reddit client error: %v", err)
@@ -123,6 +129,9 @@ func run(config Config, rc *reddit.RedditClient) error {
 		}
 		allSSDs = append(allSSDs, ssd)
 	}
+	sort.Slice(allSSDs, func(i, j int) bool {
+		return len(strings.Split(allSSDs[i].Model, " ")) > len(strings.Split(allSSDs[j].Model, " "))
+	})
 
 	posts, err := rc.GetNewPosts(SUBREDDIT, 25)
 	if err != nil {
