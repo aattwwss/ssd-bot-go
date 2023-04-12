@@ -36,7 +36,7 @@ type SSD struct {
 	Capacity string //not used
 }
 
-func (ssd SSD) toMarkdown() string {
+func (ssd SSD) ToMarkdown() string {
 	arr := []string{
 		fmt.Sprintf("The %s %s is a *%s* **%s** SSD.", ssd.Brand, ssd.Model, ssd.NandType, ssd.Category),
 		fmt.Sprintf("* Interface: **%s**", ssd.Interface),
@@ -47,12 +47,12 @@ func (ssd SSD) toMarkdown() string {
 		fmt.Sprintf("* HMB: **%s**", ssd.HMB),
 		fmt.Sprintf("* NAND Brand: **%s**", ssd.NandBrand),
 		fmt.Sprintf("* NAND Type: **%s**", ssd.NandType),
-		fmt.Sprintf("* 2D/3D NAND: **%s**", ssd.NandDimension),
+		// fmt.Sprintf("* 2D/3D NAND: **%s**", ssd.NandDimension),
 		fmt.Sprintf("* Layers: **%s**", ssd.Layers),
 		fmt.Sprintf("* R/W: **%s**", ssd.ReadWrite),
-		fmt.Sprintf("[Click here to view this SSD in the tier list](https://docs.google.com/spreadsheets/d/1B27_j9NDPU3cNlj2HKcrfpJKHkOf-Oi1DbuuQva2gT4/edit#gid=0&amp;range=A%v:V%v)", ssd.CellRow, ssd.CellRow),
-		fmt.Sprintf("[Click here to view camelcamelcamel product search page](https://camelcamelcamel.com/search?sq=%s).", ssd.Brand+" "+ssd.Model),
-		fmt.Sprintf("---\n^(Suggestions, concerns, errors? Message us directly or submit an issue on), [^(Github!)](https://github.com/aattwwss/ssd-bot-go)"),
+		fmt.Sprintf("* Price History: **[camelcamelcamel](https://camelcamelcamel.com/search?sq=%s)**", ssd.Brand+" "+ssd.Model),
+		fmt.Sprintf("---\n[^(Source)](https://docs.google.com/spreadsheets/d/1B27_j9NDPU3cNlj2HKcrfpJKHkOf-Oi1DbuuQva2gT4/edit#gid=0)"),
+		fmt.Sprintf(" [^(Github)](https://github.com/aattwwss/ssd-bot-go)"),
 	}
 	return strings.Join(arr, "\n\n")
 }
@@ -60,5 +60,5 @@ func (ssd SSD) toMarkdown() string {
 func main() {
 
 	ssd := SSD{}
-	fmt.Println(ssd.toMarkdown())
+	fmt.Println(ssd.ToMarkdown())
 }

@@ -66,12 +66,11 @@ func main() {
 		}
 	}
 
-	// err = rc.CreateComment("12ez9ws", content)
 	sheetValues, err := sheets.GetSheetsValues(SPREADSHEET_ID, SHEET_NAME)
 	if err != nil {
 		log.Fatal(err)
 	}
-	var allSSD []ssd.SSD
+	var allSSDs []ssd.SSD
 	for i, row := range sheetValues {
 		// skip the header
 		if i == 0 {
@@ -99,10 +98,17 @@ func main() {
 			Category:      getStringAtIndexOrEmpty(row, 13),
 			CellRow:       i + 1,
 		}
-		allSSD = append(allSSD, ssd)
+		allSSDs = append(allSSDs, ssd)
 	}
-	fmt.Println(allSSD)
+	found := search(allSSDs, "[SSD] Inland QN322 2TB - $79.99")
+	if found == nil {
+		return
+	}
 
+	err = rc.CreateComment("12ez9ws", found.ToMarkdown())
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func getStringAtIndexOrEmpty(arr []interface{}, i int) string {
@@ -110,4 +116,14 @@ func getStringAtIndexOrEmpty(arr []interface{}, i int) string {
 		return ""
 	}
 	return fmt.Sprintf("%v", arr[i])
+}
+
+// first try to match the branch, then match the model
+func search(allSSDs []ssd.SSD, title string) *ssd.SSD {
+	for _, ssd := range allSSDs {
+		if strings.Contains(title, ssd.Brand) && strings.Contains(title, ssd.Model) {
+			return &ssd
+		}
+	}
+	return nil
 }
