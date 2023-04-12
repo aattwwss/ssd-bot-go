@@ -28,9 +28,11 @@ type RedditClient struct {
 
 	accessToken          string
 	tokenExpireTimeMilli int64
+
+	isDebug bool
 }
 
-func NewRedditClient(clientId, clientSecret, username, password, accessToken string, expireTimeMilli int64) (*RedditClient, error) {
+func NewRedditClient(clientId, clientSecret, username, password, accessToken string, expireTimeMilli int64, isDebug bool) (*RedditClient, error) {
 	if clientId == "" || clientSecret == "" || username == "" || password == "" {
 		return nil, errors.New("clientId, clientSecret, username, password cannot be empty")
 	}
@@ -47,6 +49,7 @@ func NewRedditClient(clientId, clientSecret, username, password, accessToken str
 		password:             password,
 		accessToken:          accessToken,
 		tokenExpireTimeMilli: expireTimeMilli,
+		isDebug:              isDebug,
 	}
 
 	err := rc.RefreshToken()
@@ -105,9 +108,11 @@ func (rc *RedditClient) RefreshToken() error {
 	rc.accessToken = tokenRes.AccessToken
 	rc.tokenExpireTimeMilli = now.Add(time.Duration(tokenRes.ExpiresIn) * time.Second).UnixMilli()
 
-	log.Info().Msgf("token res: %v", tokenRes)
-	log.Info().Msgf("access token: %v", rc.accessToken)
-	log.Info().Msgf("expire time milli: %v", rc.tokenExpireTimeMilli)
+	if rc.isDebug {
+		log.Info().Msgf("token res: %v", tokenRes)
+		log.Info().Msgf("access token: %v", rc.accessToken)
+		log.Info().Msgf("expire time milli: %v", rc.tokenExpireTimeMilli)
+	}
 	return nil
 }
 func (rc *RedditClient) newRequest(method string, url string, body io.Reader) (*http.Request, error) {
