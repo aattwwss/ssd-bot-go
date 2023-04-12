@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -94,7 +95,9 @@ func (rc RedditClient) GetCommentsByPostId(postId string, limit int) ([]PostComm
 	return postComments, nil
 }
 
-func (rc RedditClient) CreateComment(postId, text string) error {
+func (rc RedditClient) SubmitComment(postId, text string) error {
+
+	time.Sleep(10 * time.Second)
 
 	data := url.Values{}
 	data.Set("api_type", "json")
