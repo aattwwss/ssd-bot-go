@@ -167,11 +167,11 @@ func run(config Config, rc *reddit.RedditClient) (int, error) {
 			continue
 		}
 
-		log.Info().Msgf("Found in database: %v", found)
 		err = rc.SubmitComment(post.ID, found.ToMarkdown())
 		if err != nil {
 			return 0, err
 		}
+		log.Info().Msgf("Post submitted for: %v", found)
 		count++
 		//rate limit submission of post to prevent getting rejected
 		time.Sleep(10 * time.Second)

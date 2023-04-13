@@ -37,6 +37,14 @@ type SSD struct {
 }
 
 func (ssd SSD) ToMarkdown() string {
+
+	ref := fmt.Sprintf(
+		"[^(Data Sheet)](%s) ^| [^( Github)](%s) ^| [^(Issues)](%s)",
+		"https://docs.google.com/spreadsheets/d/1B27_j9NDPU3cNlj2HKcrfpJKHkOf-Oi1DbuuQva2gT4/edit#gid=0",
+		"https://github.com/aattwwss/ssd-bot-go",
+		"https://github.com/aattwwss/ssd-bot-go/issues",
+	)
+
 	arr := []string{
 		fmt.Sprintf("The %s %s is a *%s* **%s** SSD.", ssd.Brand, ssd.Model, ssd.NandType, ssd.Category),
 		fmt.Sprintf("* Interface: **%s**", ssd.Interface),
@@ -51,8 +59,7 @@ func (ssd SSD) ToMarkdown() string {
 		fmt.Sprintf("* Layers: **%s**", ssd.Layers),
 		fmt.Sprintf("* R/W: **%s**", ssd.ReadWrite),
 		fmt.Sprintf("* Price History: **[camelcamelcamel](https://camelcamelcamel.com/search?sq=%s)**", ssd.Brand+" "+ssd.Model),
-		fmt.Sprintf("---\n[^(Source)](https://docs.google.com/spreadsheets/d/1B27_j9NDPU3cNlj2HKcrfpJKHkOf-Oi1DbuuQva2gT4/edit#gid=0)"),
-		fmt.Sprintf(" [^(Github)](https://github.com/aattwwss/ssd-bot-go)"),
+		fmt.Sprintf("---\n%s", ref),
 	}
 	return strings.Join(arr, "\n\n")
 }
