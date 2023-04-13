@@ -186,6 +186,7 @@ func getStringAtIndexOrEmpty(arr []interface{}, i int) string {
 	return fmt.Sprintf("%v", arr[i])
 }
 
+// very naive searching algorithm for now
 // first try to match the branch, then match the model
 func search(allSSDs []ssd.SSD, title string) *ssd.SSD {
 	for _, ssd := range allSSDs {
