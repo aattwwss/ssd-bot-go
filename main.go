@@ -86,7 +86,6 @@ func main() {
 		err = run(*config, rc)
 		if err != nil {
 			log.Error().Msgf("Run error: %v", err)
-			return
 		}
 		time.Sleep(10 * time.Minute)
 	}
@@ -128,6 +127,7 @@ func run(config Config, rc *reddit.RedditClient) error {
 		}
 		allSSDs = append(allSSDs, ssd)
 	}
+	//sort the ssds by the number of words in the model field, so they can be matched first.
 	sort.Slice(allSSDs, func(i, j int) bool {
 		return len(strings.Split(allSSDs[i].Model, " ")) > len(strings.Split(allSSDs[j].Model, " "))
 	})
