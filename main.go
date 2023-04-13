@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aattwwss/ssd-bot-go/reddit"
+	"github.com/aattwwss/ssd-bot-go/search"
 	"github.com/aattwwss/ssd-bot-go/sheets"
 	"github.com/aattwwss/ssd-bot-go/ssd"
 	"github.com/rs/zerolog/log"
@@ -100,6 +100,7 @@ func run(config Config, rc *reddit.RedditClient) (int, error) {
 	}
 
 	var allSSDs []ssd.SSD
+	var searchDocuments []string
 	for i, row := range sheetValues {
 		// skip the header
 		if i == 0 {
@@ -127,12 +128,10 @@ func run(config Config, rc *reddit.RedditClient) (int, error) {
 			Category:      getStringAtIndexOrEmpty(row, 13),
 			CellRow:       i + 1,
 		}
+		searchDocuments = append(searchDocuments, search.ReplaceSpecialChar(ssd.Brand+" "+ssd.Model, " "))
 		allSSDs = append(allSSDs, ssd)
 	}
-	//sort the ssds by the number of words in the model field, so they can be matched first.
-	sort.Slice(allSSDs, func(i, j int) bool {
-		return len(strings.Split(allSSDs[i].Model, " ")) > len(strings.Split(allSSDs[j].Model, " "))
-	})
+	tfidf := search.NewTfIdf(searchDocuments)
 
 	posts, err := rc.GetNewPosts(SUBREDDIT, 25)
 	if err != nil {
@@ -161,7 +160,8 @@ func run(config Config, rc *reddit.RedditClient) (int, error) {
 			continue
 		}
 		log.Info().Msgf("Found post: %s", post.Title)
-		found := search(allSSDs, post.Title)
+		// found := matchSsd(allSSDs, tfidf, post.Title)
+		found := searchSsd(allSSDs, post.Title, tfidf)
 		if found == nil {
 			log.Info().Msgf("SSD not found in database: %s", post.Title)
 			continue
@@ -188,7 +188,7 @@ func getStringAtIndexOrEmpty(arr []interface{}, i int) string {
 
 // very naive searching algorithm for now
 // first try to match the branch, then match the model
-func search(allSSDs []ssd.SSD, title string) *ssd.SSD {
+func matchSsd(allSSDs []ssd.SSD, tfidf *search.TfIdf, title string) *ssd.SSD {
 	for _, ssd := range allSSDs {
 		title = strings.ToUpper(title)
 		brand := strings.ToUpper(ssd.Brand)
@@ -198,4 +198,29 @@ func search(allSSDs []ssd.SSD, title string) *ssd.SSD {
 		}
 	}
 	return nil
+}
+
+// using tfidf to find the most relevant ssd
+func searchSsd(allSSDs []ssd.SSD, searchString string, tfidf *search.TfIdf) *ssd.SSD {
+	terms := strings.Fields(searchString)
+	scores := make([]float64, len(tfidf.Documents))
+	for i := range tfidf.Documents {
+		for _, term := range terms {
+			scores[i] += tfidf.TfIdf(term, i)
+		}
+	}
+	maxScore := 0.0
+	maxIndex := 0
+	for i, score := range scores {
+		if score > maxScore {
+			maxScore = score
+			maxIndex = i
+		}
+	}
+
+	// if not relevant at all, or if the post title does not contain the brand
+	if maxScore == 0 || !strings.Contains(searchString, allSSDs[maxIndex].Model) {
+		return nil
+	}
+	return &allSSDs[maxIndex]
 }
