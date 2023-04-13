@@ -83,18 +83,20 @@ func main() {
 	}
 
 	for {
-		err = run(*config, rc)
+		log.Info().Msgf("Scanning...")
+		count, err := run(*config, rc)
 		if err != nil {
 			log.Error().Msgf("Run error: %v", err)
 		}
+		log.Info().Msgf("Updated %v posts...", count)
 		time.Sleep(10 * time.Minute)
 	}
 }
 
-func run(config Config, rc *reddit.RedditClient) error {
+func run(config Config, rc *reddit.RedditClient) (int, error) {
 	sheetValues, err := sheets.GetSheetsValues(SPREADSHEET_ID, SHEET_NAME)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	var allSSDs []ssd.SSD
@@ -134,12 +136,12 @@ func run(config Config, rc *reddit.RedditClient) error {
 
 	posts, err := rc.GetNewPosts(SUBREDDIT, 25)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	botComments, err := rc.GetBotNewestComments(25)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	botCommentsMap := map[string]bool{}
@@ -148,6 +150,7 @@ func run(config Config, rc *reddit.RedditClient) error {
 		botCommentsMap[linkId] = true
 	}
 
+	count := 0
 	for _, post := range posts {
 		if !strings.Contains(strings.ToUpper(post.LinkFlairText), "SSD") {
 			continue
@@ -157,7 +160,7 @@ func run(config Config, rc *reddit.RedditClient) error {
 			log.Info().Msgf("Already commented on this post: %s", post.Title)
 			continue
 		}
-		log.Info().Msgf("Found post about SSD: %s", post.Title)
+		log.Info().Msgf("Found post: %s", post.Title)
 		found := search(allSSDs, post.Title)
 		if found == nil {
 			log.Info().Msgf("SSD not found in database: %s", post.Title)
@@ -165,14 +168,15 @@ func run(config Config, rc *reddit.RedditClient) error {
 		}
 
 		log.Info().Msgf("Found in database: %v", found)
-		// err = rc.SubmitComment("12jiw1n", found.ToMarkdown())
 		err = rc.SubmitComment(post.ID, found.ToMarkdown())
 		if err != nil {
-			return err
+			return 0, err
 		}
+		count++
+		//rate limit submission of post to prevent getting rejected
 		time.Sleep(10 * time.Second)
 	}
-	return nil
+	return count, nil
 }
 
 func getStringAtIndexOrEmpty(arr []interface{}, i int) string {
