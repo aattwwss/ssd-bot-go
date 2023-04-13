@@ -218,8 +218,8 @@ func searchSsd(allSSDs []ssd.SSD, searchString string, tfidf *search.TfIdf) *ssd
 		}
 	}
 
-	// if not relevant at all, or if the post title does not contain the brand
-	if maxScore == 0 || !strings.Contains(searchString, allSSDs[maxIndex].Model) {
+	// if not relevant at all
+	if maxScore == 0 {
 		return nil
 	}
 	return &allSSDs[maxIndex]
