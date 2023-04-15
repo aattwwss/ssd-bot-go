@@ -128,7 +128,7 @@ func run(config Config, rc *reddit.RedditClient) (int, error) {
 			Category:      getStringAtIndexOrEmpty(row, 13),
 			CellRow:       i + 1,
 		}
-		searchDocuments = append(searchDocuments, search.ReplaceSpecialChar(ssd.Brand+" "+ssd.Model, " "))
+		searchDocuments = append(searchDocuments, search.ReplaceSpecialChar(strings.ToUpper(ssd.Brand)+" "+strings.ToUpper(ssd.Model), " "))
 		allSSDs = append(allSSDs, ssd)
 	}
 	tfidf := search.NewTfIdf(searchDocuments)
@@ -201,8 +201,10 @@ func matchSsd(allSSDs []ssd.SSD, tfidf *search.TfIdf, title string) *ssd.SSD {
 }
 
 // using tfidf to find the most relevant ssd
-func searchSsd(allSSDs []ssd.SSD, searchString string, tfidf *search.TfIdf) *ssd.SSD {
-	terms := strings.Fields(searchString)
+func searchSsd(allSSDs []ssd.SSD, postTitle string, tfidf *search.TfIdf) *ssd.SSD {
+	postTitle = cleanTitle(postTitle)
+
+	terms := strings.Fields(postTitle)
 	scores := make([]float64, len(tfidf.Documents))
 	for i := range tfidf.Documents {
 		for _, term := range terms {
@@ -219,8 +221,28 @@ func searchSsd(allSSDs []ssd.SSD, searchString string, tfidf *search.TfIdf) *ssd
 	}
 
 	// if not relevant at all, or if the post title does not contain the brand
-	if maxScore == 0 || !strings.Contains(searchString, allSSDs[maxIndex].Model) {
+	if maxScore == 0 || !strings.Contains(postTitle, allSSDs[maxIndex].Brand) {
+		log.Info().Msgf("Reject found ssd. score: %v, Title: %s, Brand: %s", maxScore, postTitle, allSSDs[maxIndex].Brand)
 		return nil
 	}
+
 	return &allSSDs[maxIndex]
+}
+
+//temporary fix for some misalignment in post titles and the google sheets brands and models
+func cleanTitle(title string) string {
+
+	title = strings.ToUpper(title)
+	replaceRules := map[string]string{
+		"TEAMGROUP": "TEAMGROUP TEAM GROUP",
+		"XPG":       "ADATA XPG",
+	}
+
+	for k := range replaceRules {
+		if v, ok := replaceRules[k]; ok {
+			title = strings.ReplaceAll(title, k, v)
+		}
+	}
+
+	return title
 }
