@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -32,30 +31,6 @@ type Config struct {
 	Token           string `env:"BOT_ACCESS_TOKEN"`
 	ExpireTimeMilli int64  `env:"BOT_TOKEN_EXPIRE_MILLI"`
 	IsDebug         bool   `env:"IS_DEBUG"`
-}
-
-func newConfig(clientId, clientSecret, username, password, token string, expireTimeMilli int64, isDebug bool) (*Config, error) {
-	if clientId == "" || clientSecret == "" || username == "" || password == "" {
-		return nil, errors.New("clientId, clientSecret, username and password cannot be empty")
-	}
-
-	config := Config{
-		ClientId:        clientId,
-		ClientSecret:    clientSecret,
-		Username:        username,
-		Password:        password,
-		Token:           token,
-		ExpireTimeMilli: expireTimeMilli,
-		IsDebug:         isDebug,
-	}
-
-	if isDebug {
-		config.IsDebug = isDebug
-		config.Token = token
-		config.ExpireTimeMilli = expireTimeMilli
-	}
-
-	return &config, nil
 }
 
 func main() {
