@@ -170,9 +170,9 @@ func matchSsd(allSSDs []ssd.SSD, tfidf *search.TfIdf, title string) *ssd.SSD {
 
 // using tfidf to find the most relevant ssd
 func searchSsd(allSSDs []ssd.SSD, postTitle string, tfidf *search.TfIdf) *ssd.SSD {
-	postTitle = cleanTitle(postTitle)
+	cleanedTitle := cleanTitle(postTitle)
 
-	terms := strings.Fields(postTitle)
+	terms := strings.Fields(cleanedTitle)
 	scores := make([]float64, len(tfidf.Documents))
 	for i := range tfidf.Documents {
 		for _, term := range terms {
