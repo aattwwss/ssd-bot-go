@@ -69,24 +69,6 @@ func main() {
 		log.Fatal().Msgf("Parse env error: %v", err)
 	}
 
-	// expireTimeMilli, err := strconv.ParseInt(os.Getenv("BOT_TOKEN_EXPIRE_MILLI"), 10, 64)
-	// if err != nil {
-	// 	log.Info().Msgf("Cannot parse expireTimeMilli, setting it to 0.")
-	// 	expireTimeMilli = 0
-	// }
-
-	// clientId := os.Getenv("CLIENT_ID")
-	// clientSecret := os.Getenv("CLIENT_SECRET")
-	// username := os.Getenv("BOT_USERNAME")
-	// password := os.Getenv("BOT_PASSWORD")
-	// token := os.Getenv("BOT_ACCESS_TOKEN")
-	// isDebug := strings.ToUpper(os.Getenv("IS_DEBUG")) == "TRUE"
-	//
-	// config, err := newConfig(clientId, clientSecret, username, password, token, expireTimeMilli, isDebug)
-	// if err != nil {
-	// 	log.Error().Msgf("Init config error: %v", err)
-	// 	return
-	//}
 	rc, err := reddit.NewRedditClient(config.ClientId, config.ClientSecret, config.Username, config.Password, config.Token, config.ExpireTimeMilli, config.IsDebug)
 	if err != nil {
 		log.Error().Msgf("Init reddit client error: %v", err)
