@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"strings"
 
@@ -16,6 +17,75 @@ type Post struct {
 	Title         string `json:"title"`
 	Name          string `json:"name"`
 	LinkFlairText string `json:"link_flair_text"`
+}
+
+type SearchPostOption struct {
+	Subreddit           string
+	Q                   *string
+	Limit               int
+	Sort                string
+	After               *string
+	RestrictToSubreddit bool
+}
+
+func (o SearchPostOption) ToUrlParam() string {
+	if o.Sort == "" {
+		o.Sort = "new"
+	}
+	param := fmt.Sprintf("restrict_sr=%v&limit=%v&sort=%s", o.RestrictToSubreddit, o.Limit, o.Sort)
+	if o.After != nil {
+		param += fmt.Sprintf("&after=%s", url.QueryEscape(*o.After))
+	}
+	if o.Q != nil {
+		param += fmt.Sprintf("&q=%s", url.QueryEscape(*o.Q))
+	}
+	_url := fmt.Sprintf("https://oauth.reddit.com/r/%s/search?%s", o.Subreddit, param)
+	return _url
+}
+
+func (rc RedditClient) SearchPosts(o SearchPostOption) ([]Post, error) {
+	requestUrl := o.ToUrlParam()
+	req, err := rc.newRequest("GET", requestUrl, nil)
+	if err != nil {
+		log.Error().Msgf("Error creating request: %v", err)
+		return nil, err
+	}
+	resp, err := rc.httpClient.Do(req)
+	if err != nil {
+		log.Error().Msgf("Error sending request: %v", err)
+		return nil, err
+	}
+	if resp.StatusCode/100 != 2 {
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading response body:", err)
+		}
+
+		var data interface{}
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			fmt.Println("Error decoding response body:", err)
+		}
+
+		// Here you can print the decoded JSON data
+		fmt.Println(data)
+		log.Error().Msgf("Error request: %v", resp.Status)
+		return nil, errors.New("Received non OK status code: " + resp.Status)
+	}
+	defer resp.Body.Close()
+
+	var postDataListing Listing[Post]
+	err = json.NewDecoder(resp.Body).Decode(&postDataListing)
+	if err != nil {
+		log.Error().Msgf("Error decoding response body:", err)
+		return nil, err
+	}
+	var posts []Post
+	for _, child := range postDataListing.Data.Children {
+		posts = append(posts, child.Data)
+	}
+	return posts, nil
 }
 
 func (rc RedditClient) GetNewPosts(subreddit string, limit int) ([]Post, error) {
