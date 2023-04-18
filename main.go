@@ -1,10 +1,7 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -12,6 +9,8 @@ import (
 	"github.com/aattwwss/ssd-bot-go/search"
 	"github.com/aattwwss/ssd-bot-go/sheets"
 	"github.com/aattwwss/ssd-bot-go/ssd"
+	"github.com/caarlos0/env/v8"
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 )
 
@@ -24,58 +23,27 @@ const (
 )
 
 type Config struct {
-	ClientId        string
-	ClientSecret    string
-	Username        string
-	Password        string
-	Token           string
-	ExpireTimeMilli int64
-	IsDebug         bool
-}
+	ClientId     string `env:"CLIENT_ID,notEmpty"`
+	ClientSecret string `env:"CLIENT_SECRET,notEmpty"`
+	Username     string `env:"BOT_USERNAME,notEmpty"`
+	Password     string `env:"BOT_PASSWORD,notEmpty"`
 
-func newConfig(clientId, clientSecret, username, password, token string, expireTimeMilli int64, isDebug bool) (*Config, error) {
-	if clientId == "" || clientSecret == "" || username == "" || password == "" {
-		return nil, errors.New("clientId, clientSecret, username and password cannot be empty")
-	}
-
-	config := Config{
-		ClientId:        clientId,
-		ClientSecret:    clientSecret,
-		Username:        username,
-		Password:        password,
-		Token:           token,
-		ExpireTimeMilli: expireTimeMilli,
-		IsDebug:         isDebug,
-	}
-
-	if isDebug {
-		config.IsDebug = isDebug
-		config.Token = token
-		config.ExpireTimeMilli = expireTimeMilli
-	}
-
-	return &config, nil
+	Token           string `env:"BOT_ACCESS_TOKEN"`
+	ExpireTimeMilli int64  `env:"BOT_TOKEN_EXPIRE_MILLI"`
+	IsDebug         bool   `env:"IS_DEBUG"`
 }
 
 func main() {
-	expireTimeMilli, err := strconv.ParseInt(os.Getenv("BOT_TOKEN_EXPIRE_MILLI"), 10, 64)
+	err := godotenv.Load()
 	if err != nil {
-		log.Info().Msgf("Cannot parse expireTimeMilli, setting it to 0.")
-		expireTimeMilli = 0
+		log.Fatal().Msg("Error loading .env file")
 	}
 
-	clientId := os.Getenv("CLIENT_ID")
-	clientSecret := os.Getenv("CLIENT_SECRET")
-	username := os.Getenv("BOT_USERNAME")
-	password := os.Getenv("BOT_PASSWORD")
-	token := os.Getenv("BOT_ACCESS_TOKEN")
-	isDebug := strings.ToUpper(os.Getenv("IS_DEBUG")) == "TRUE"
-
-	config, err := newConfig(clientId, clientSecret, username, password, token, expireTimeMilli, isDebug)
-	if err != nil {
-		log.Error().Msgf("Init config error: %v", err)
-		return
+	config := Config{}
+	if err := env.Parse(&config); err != nil {
+		log.Fatal().Msgf("Parse env error: %v", err)
 	}
+
 	rc, err := reddit.NewRedditClient(config.ClientId, config.ClientSecret, config.Username, config.Password, config.Token, config.ExpireTimeMilli, config.IsDebug)
 	if err != nil {
 		log.Error().Msgf("Init reddit client error: %v", err)
@@ -84,7 +52,7 @@ func main() {
 
 	for {
 		log.Info().Msgf("Scanning...")
-		count, err := run(*config, rc)
+		count, err := run(config, rc)
 		if err != nil {
 			log.Error().Msgf("Run error: %v", err)
 		}
@@ -202,9 +170,9 @@ func matchSsd(allSSDs []ssd.SSD, tfidf *search.TfIdf, title string) *ssd.SSD {
 
 // using tfidf to find the most relevant ssd
 func searchSsd(allSSDs []ssd.SSD, postTitle string, tfidf *search.TfIdf) *ssd.SSD {
-	postTitle = cleanTitle(postTitle)
+	cleanedTitle := cleanTitle(postTitle)
 
-	terms := strings.Fields(postTitle)
+	terms := strings.Fields(cleanedTitle)
 	scores := make([]float64, len(tfidf.Documents))
 	for i := range tfidf.Documents {
 		for _, term := range terms {
@@ -221,8 +189,8 @@ func searchSsd(allSSDs []ssd.SSD, postTitle string, tfidf *search.TfIdf) *ssd.SS
 	}
 
 	// if not relevant at all, or if the post title does not contain the brand
-	if maxScore == 0 || !strings.Contains(postTitle, allSSDs[maxIndex].Brand) {
-		log.Info().Msgf("Reject found ssd. score: %v, Title: %s, Brand: %s", maxScore, postTitle, allSSDs[maxIndex].Brand)
+	if maxScore == 0 || !strings.Contains(postTitle, strings.ToUpper(allSSDs[maxIndex].Brand)) || !strings.Contains(postTitle, strings.ToUpper(allSSDs[maxIndex].Model)) {
+		log.Info().Msgf("Reject found ssd. score: %v, Title: %s, SSD: %v", maxScore, postTitle, allSSDs[maxIndex])
 		return nil
 	}
 
