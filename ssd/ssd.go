@@ -3,6 +3,8 @@ package ssd
 import (
 	"fmt"
 	"strings"
+
+	"github.com/aattwwss/ssd-bot-go/search"
 )
 
 type SSD struct {
@@ -62,6 +64,19 @@ func (ssd SSD) ToMarkdown() string {
 		fmt.Sprintf("---\n%s", ref),
 	}
 	return strings.Join(arr, "\n\n")
+}
+
+func (ssd SSD) GetSearchTerms() string {
+	terms := []string{
+		ssd.Brand,
+		ssd.Model,
+		ssd.Controller,
+		ssd.Configuration,
+		ssd.ReadWrite,
+		ssd.NandBrand,
+		ssd.NandType,
+	}
+	return search.ReplaceSpecialChar(strings.ToUpper(strings.Join(terms, " ")), " ")
 }
 
 func main() {

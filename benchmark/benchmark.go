@@ -1,4 +1,4 @@
-package main
+package benchmark
 
 import (
 	"bufio"
@@ -6,44 +6,45 @@ import (
 	"os"
 	"strings"
 
+	"github.com/aattwwss/ssd-bot-go/config"
 	"github.com/aattwwss/ssd-bot-go/reddit"
-	"github.com/caarlos0/env/v8"
-	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 )
 
-type Config struct {
-	ClientId     string `env:"CLIENT_ID,notEmpty"`
-	ClientSecret string `env:"CLIENT_SECRET,notEmpty"`
-	Username     string `env:"BOT_USERNAME,notEmpty"`
-	Password     string `env:"BOT_PASSWORD,notEmpty"`
-
-	Token           string `env:"BOT_ACCESS_TOKEN"`
-	ExpireTimeMilli int64  `env:"BOT_TOKEN_EXPIRE_MILLI"`
-	IsDebug         bool   `env:"IS_DEBUG"`
-}
-
-func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal().Msg("Error loading .env file")
-	}
-
-	config := Config{}
-	if err := env.Parse(&config); err != nil {
-		log.Fatal().Msgf("Parse env error: %v", err)
-	}
+func Benchmark(config config.Config) {
 	// initPostsData(config)
+	// read dataset.csv
+	// parse into title and "brand + model"
+	// for each title, run the search algo and see if match which the brand and model
+	// calculate score e.g. if matched +1 else 0. Do some math
+	// return score
+	file, err := os.Open("benchmark/dataset.csv")
+	if err != nil {
+		log.Error().Msgf("open file error: %v", err)
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		fmt.Println(line)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Error().Msgf("scanner error: %v", err)
+		return
+	}
 }
 
-func initPostsData(config Config) {
+func initPostsData(config config.Config) {
 	rc, err := reddit.NewRedditClient(config.ClientId, config.ClientSecret, config.Username, config.Password, config.Token, config.ExpireTimeMilli, config.IsDebug)
 	if err != nil {
 		log.Error().Msgf("Init reddit client error: %v", err)
 		return
 	}
 
-	file, err := os.OpenFile("benchmark/posts.txt", os.O_WRONLY|os.O_TRUNC, 0644)
+	file, err := os.OpenFile("dataset.csv", os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Error().Msgf("Open file error: %v", err)
 		return
