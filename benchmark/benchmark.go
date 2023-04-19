@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aattwwss/ssd-bot-go/reddit"
 	"github.com/caarlos0/env/v8"
@@ -32,7 +33,7 @@ func main() {
 	if err := env.Parse(&config); err != nil {
 		log.Fatal().Msgf("Parse env error: %v", err)
 	}
-	initPostsData(config)
+	// initPostsData(config)
 }
 
 func initPostsData(config Config) {
@@ -55,7 +56,8 @@ func initPostsData(config Config) {
 	posts := getLatestSSDPosts(rc)
 
 	for _, post := range posts {
-		data := fmt.Sprintf("%s|%s\n", post.ID, post.Title)
+		ssd := getSSDFromPost(rc, post)
+		data := fmt.Sprintf("%s\t%s\t%s\n", post.ID, post.Title, ssd)
 		_, err := writer.WriteString(data)
 		if err != nil {
 			log.Error().Msgf("Write to file error: %v", err)
@@ -69,6 +71,7 @@ func initPostsData(config Config) {
 		return
 	}
 }
+
 func getLatestSSDPosts(rc *reddit.RedditClient) []reddit.Post {
 	total := 500
 	pageSize := 100
@@ -107,4 +110,37 @@ func getLatestSSDPosts(rc *reddit.RedditClient) []reddit.Post {
 		}
 	}
 	return res
+}
+
+func getSSDFromPost(rc *reddit.RedditClient, post reddit.Post) string {
+	comments, err := rc.GetCommentsByPostId(post.ID, 100)
+	if err != nil {
+		log.Error().Msgf("GetCommentsByPostId error: %v", err)
+		return ""
+	}
+	for _, comment := range comments {
+		if strings.Contains(strings.ToUpper(comment.Author), "SSD") && strings.Contains(strings.ToUpper(comment.Author), "BOT") {
+			res, err := substringBetween(comment.Body, "The ", " is a ")
+			if err != nil {
+				return ""
+			}
+			log.Info().Msgf("%s", res)
+			return res
+		}
+	}
+	return ""
+}
+
+func substringBetween(s, start, end string) (string, error) {
+	startIndex := strings.Index(s, start)
+	if startIndex == -1 {
+		return "", fmt.Errorf("substring %q not found", start)
+	}
+	startIndex += len(start)
+	endIndex := strings.Index(s[startIndex:], end)
+	if endIndex == -1 {
+		return "", fmt.Errorf("substring %q not found after index %d", end, startIndex)
+	}
+	endIndex += startIndex
+	return s[startIndex:endIndex], nil
 }
