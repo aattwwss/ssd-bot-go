@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Post struct {
+type Submission struct {
 	ID            string `json:"id"`
 	Subreddit     string `json:"subreddit"`
 	Title         string `json:"title"`
@@ -18,7 +18,7 @@ type Post struct {
 	LinkFlairText string `json:"link_flair_text"`
 }
 
-func (rc RedditClient) GetNewPosts(subreddit string, limit int) ([]Post, error) {
+func (rc RedditClient) GetNewSubmissions(subreddit string, limit int) ([]Submission, error) {
 	url := fmt.Sprintf("https://oauth.reddit.com/r/%s/new?limit=%v", subreddit, limit)
 	req, err := rc.newRequest("GET", url, nil)
 	if err != nil {
@@ -36,20 +36,20 @@ func (rc RedditClient) GetNewPosts(subreddit string, limit int) ([]Post, error) 
 	}
 	defer resp.Body.Close()
 
-	var postDataListing Listing[Post]
-	err = json.NewDecoder(resp.Body).Decode(&postDataListing)
+	var listings Listing[Submission]
+	err = json.NewDecoder(resp.Body).Decode(&listings)
 	if err != nil {
 		log.Error().Msgf("Error decoding response body:", err)
 		return nil, err
 	}
-	var posts []Post
-	for _, child := range postDataListing.Data.Children {
+	var posts []Submission
+	for _, child := range listings.Data.Children {
 		posts = append(posts, child.Data)
 	}
 	return posts, nil
 }
 
-type PostComment struct {
+type SubmissionComment struct {
 	SubredditID    string `json:"subreddit_id"`
 	Subreddit      string `json:"subreddit"`
 	ID             string `json:"id"`
@@ -61,9 +61,9 @@ type PostComment struct {
 	IsSubmitter    bool   `json:"is_submitter"`
 }
 
-func (rc RedditClient) GetCommentsByPostId(postId string, limit int) ([]PostComment, error) {
+func (rc RedditClient) GetCommentsBySubmissionId(submissionId string, limit int) ([]SubmissionComment, error) {
 
-	url := fmt.Sprintf("https://oauth.reddit.com/comments/%s?limit=%v&depth=1", postId, limit)
+	url := fmt.Sprintf("https://oauth.reddit.com/comments/%s?limit=%v&depth=1", submissionId, limit)
 	req, err := rc.newRequest("GET", url, nil)
 	if err != nil {
 		log.Error().Msgf("Error creating request: %v", err)
@@ -80,18 +80,18 @@ func (rc RedditClient) GetCommentsByPostId(postId string, limit int) ([]PostComm
 	}
 	defer resp.Body.Close()
 
-	var postCommentsListing []Listing[PostComment]
-	err = json.NewDecoder(resp.Body).Decode(&postCommentsListing)
+	var listings []Listing[SubmissionComment]
+	err = json.NewDecoder(resp.Body).Decode(&listings)
 	if err != nil {
 		log.Error().Msgf("Error decoding response body:", err)
 		return nil, err
 	}
-	var postComments []PostComment
+	var submissionComments []SubmissionComment
 	// hardcoding to use the 2nd element as the first is the post information
-	for _, child := range postCommentsListing[1].Data.Children {
-		postComments = append(postComments, child.Data)
+	for _, child := range listings[1].Data.Children {
+		submissionComments = append(submissionComments, child.Data)
 	}
-	return postComments, nil
+	return submissionComments, nil
 }
 
 func (rc RedditClient) SubmitComment(postId, text string) error {
