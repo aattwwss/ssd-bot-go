@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aattwwss/ssd-bot-go/pkg/common/reddit"
-	common "github.com/aattwwss/ssd-bot-go/pkg/common/reddit"
-	"github.com/aattwwss/ssd-bot-go/pkg/common/search"
-	"github.com/aattwwss/ssd-bot-go/pkg/common/sheets"
-	"github.com/aattwwss/ssd-bot-go/pkg/common/ssd"
+	"github.com/aattwwss/ssd-bot-go/pkg/config"
+	"github.com/aattwwss/ssd-bot-go/pkg/reddit"
+	"github.com/aattwwss/ssd-bot-go/pkg/search"
+	"github.com/aattwwss/ssd-bot-go/pkg/sheets"
+	"github.com/aattwwss/ssd-bot-go/pkg/ssd"
 	"github.com/caarlos0/env/v8"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
@@ -29,7 +29,7 @@ func main() {
 		log.Fatal().Msg("Error loading .env file")
 	}
 
-	config := Config{}
+	config := config.Config{}
 	if err := env.Parse(&config); err != nil {
 		log.Fatal().Msgf("Parse env error: %v", err)
 	}
@@ -51,7 +51,7 @@ func main() {
 	}
 }
 
-func run(config Config, rc *common.RedditClient) (int, error) {
+func run(config config.Config, rc *reddit.RedditClient) (int, error) {
 	sheetValues, err := sheets.GetSheetsValues(SPREADSHEET_ID, SHEET_NAME)
 	if err != nil {
 		return 0, err
