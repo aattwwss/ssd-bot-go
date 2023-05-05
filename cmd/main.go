@@ -5,10 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aattwwss/ssd-bot-go/reddit"
-	"github.com/aattwwss/ssd-bot-go/search"
-	"github.com/aattwwss/ssd-bot-go/sheets"
-	"github.com/aattwwss/ssd-bot-go/ssd"
+	"github.com/aattwwss/ssd-bot-go/pkg/common/reddit"
+	common "github.com/aattwwss/ssd-bot-go/pkg/common/reddit"
+	"github.com/aattwwss/ssd-bot-go/pkg/common/search"
+	"github.com/aattwwss/ssd-bot-go/pkg/common/sheets"
+	"github.com/aattwwss/ssd-bot-go/pkg/common/ssd"
 	"github.com/caarlos0/env/v8"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
@@ -21,17 +22,6 @@ const (
 	SPREADSHEET_ID = "1B27_j9NDPU3cNlj2HKcrfpJKHkOf-Oi1DbuuQva2gT4"
 	SHEET_NAME     = "'Master List'" //take note of the single quote, which is needed for sheets with space in them
 )
-
-type Config struct {
-	ClientId     string `env:"CLIENT_ID,notEmpty"`
-	ClientSecret string `env:"CLIENT_SECRET,notEmpty"`
-	Username     string `env:"BOT_USERNAME,notEmpty"`
-	Password     string `env:"BOT_PASSWORD,notEmpty"`
-
-	Token           string `env:"BOT_ACCESS_TOKEN"`
-	ExpireTimeMilli int64  `env:"BOT_TOKEN_EXPIRE_MILLI"`
-	IsDebug         bool   `env:"IS_DEBUG"`
-}
 
 func main() {
 	err := godotenv.Load()
@@ -61,7 +51,7 @@ func main() {
 	}
 }
 
-func run(config Config, rc *reddit.RedditClient) (int, error) {
+func run(config Config, rc *common.RedditClient) (int, error) {
 	sheetValues, err := sheets.GetSheetsValues(SPREADSHEET_ID, SHEET_NAME)
 	if err != nil {
 		return 0, err
@@ -197,7 +187,7 @@ func searchSsd(allSSDs []ssd.SSD, postTitle string, tfidf *search.TfIdf) *ssd.SS
 	return &allSSDs[maxIndex]
 }
 
-//temporary fix for some misalignment in post titles and the google sheets brands and models
+// temporary fix for some misalignment in post titles and the google sheets brands and models
 func cleanTitle(title string) string {
 
 	title = strings.ToUpper(title)
