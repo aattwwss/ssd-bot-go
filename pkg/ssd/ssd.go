@@ -5,36 +5,75 @@ import (
 	"strings"
 )
 
-type SSD struct {
-	Brand    string
-	Model    string
-	NandType string
-	Category string
-
-	Interface string
-
-	FormFactor string
-
-	Controller string
-
-	Configuration string
-
-	DRAM string //yes/no
-
-	HMB string //yes/no
-
-	NandBrand string
-
-	NandDimension string //2D or 3D
-
-	Layers string
-
-	ReadWrite string
-
-	CellRow int
-
-	Capacity string //not used
+type SSDRepository interface {
+	GetById(id string) (SSD, error)
+	Search(s string) ([]SSD, error)
 }
+
+type SSD struct {
+	DriveID      string     `json:"driveId"`
+	URL          string     `json:"url"`
+	Manufacturer string     `json:"mfgr"`
+	Name         string     `json:"name"`
+	Capacity     string     `json:"capacity"`
+	FormFactor   string     `json:"formFactor"`
+	Interface    string     `json:"interface"`
+	Protocol     string     `json:"protocol"`
+	Dram         string     `json:"dram"`
+	Hmb          string     `json:"hmb"`
+	Released     string     `json:"released"`
+	Endurance    string     `json:"endurance"`
+	Warranty     string     `json:"warranty"`
+	SeqRead      string     `json:"seqRead"`
+	SeqWrite     string     `json:"seqWrite"`
+	Controller   Controller `json:"controller"`
+	Flash        Flash      `json:"flash"`
+}
+
+type Controller struct {
+	Manufacturer string `json:"mfgr"`
+	Name         string `json:"name"`
+	NameShort    string `json:"nameShort"`
+	Channels     string `json:"channels"`
+}
+
+type Flash struct {
+	Manufacturer string `json:"mfgr"`
+	Name         string `json:"name"`
+	Type         string `json:"type"`
+	Layers       string `json:"layers"`
+}
+
+// type SSD struct {
+// 	Brand    string
+// 	Model    string
+// 	NandType string
+// 	Category string
+//
+// 	Interface string
+//
+// 	FormFactor string
+//
+// 	Controller string
+//
+// 	Configuration string
+//
+// 	DRAM string //yes/no
+//
+// 	HMB string //yes/no
+//
+// 	NandBrand string
+//
+// 	NandDimension string //2D or 3D
+//
+// 	Layers string
+//
+// 	ReadWrite string
+//
+// 	CellRow int
+//
+// 	Capacity string //not used
+// }
 
 func (ssd SSD) ToMarkdown() string {
 
