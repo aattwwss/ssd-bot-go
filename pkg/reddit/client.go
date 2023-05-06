@@ -20,11 +20,12 @@ type tokenRes struct {
 }
 
 type RedditClient struct {
-	httpClient   *http.Client
-	clientId     string
-	clientSecret string
-	username     string
-	password     string
+	httpClient     *http.Client
+	clientId       string
+	clientSecret   string
+	username       string
+	password       string
+	overrideOldBot bool
 
 	accessToken          string
 	tokenExpireTimeMilli int64
@@ -33,10 +34,10 @@ type RedditClient struct {
 }
 
 const (
-	USER_AGENT = "SSD bot v2.0 by /u/_SSD_BOT_ github.com/aattwwss/ssd-bot-go" //need to set user agent to prevent getting blocked by reddit
+	userAgent = "SSD bot v2.0 by /u/_SSD_BOT_ github.com/aattwwss/ssd-bot-go" //need to set user agent to prevent getting blocked by reddit
 )
 
-func NewRedditClient(clientId, clientSecret, username, password, accessToken string, expireTimeMilli int64, isDebug bool) (*RedditClient, error) {
+func NewRedditClient(clientId, clientSecret, username, password, accessToken string, expireTimeMilli int64, overrideOldBot, isDebug bool) (*RedditClient, error) {
 	if clientId == "" || clientSecret == "" || username == "" || password == "" {
 		return nil, errors.New("clientId, clientSecret, username, password cannot be empty")
 	}
@@ -51,6 +52,7 @@ func NewRedditClient(clientId, clientSecret, username, password, accessToken str
 		clientSecret:         clientSecret,
 		username:             username,
 		password:             password,
+		overrideOldBot:       overrideOldBot,
 		accessToken:          accessToken,
 		tokenExpireTimeMilli: expireTimeMilli,
 		isDebug:              isDebug,
@@ -79,7 +81,7 @@ func (rc *RedditClient) RefreshToken() error {
 
 	// Create a new POST request
 	req, err := http.NewRequest("POST", "https://www.reddit.com/api/v1/access_token", strings.NewReader(data.Encode()))
-	req.Header.Add("User-Agent", USER_AGENT)
+	req.Header.Add("User-Agent", userAgent)
 	if err != nil {
 		log.Error().Msgf("Error creating request: %v", err)
 		return err
@@ -91,7 +93,6 @@ func (rc *RedditClient) RefreshToken() error {
 	req.SetBasicAuth(rc.clientId, rc.clientSecret)
 
 	// Send the request
-	// resp, err := rc.httpClient.Do(req)
 	resp, err := retryHttpRequest(rc.httpClient, req, 5, time.Minute)
 	if err != nil {
 		log.Error().Msgf("Error sending request: %v", err)
@@ -123,21 +124,13 @@ func (rc *RedditClient) RefreshToken() error {
 }
 
 func (rc *RedditClient) newRequest(method string, url string, body io.Reader) (*http.Request, error) {
-	// TODO add a checkk for token validity here
-	now := time.Now()
-	durationFromExpire := time.UnixMilli(rc.tokenExpireTimeMilli).Sub(now).Minutes()
-	if durationFromExpire < 30 {
-		log.Info().Msgf("Refreshing access token.")
-		rc.RefreshToken()
-	}
-
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Add("Authorization", "bearer "+rc.accessToken)
-	req.Header.Add("User-Agent", USER_AGENT)
+	req.Header.Add("User-Agent", userAgent)
 	return req, nil
 }
 
@@ -156,5 +149,5 @@ func retryHttpRequest(client *http.Client, req *http.Request, attempts int, slee
 		sleep *= 2 // increase delay exponentially
 	}
 
-	return nil, errors.New("exceeded retry attempts")
+	return nil, errors.New("http request exceeded retry attempts")
 }
