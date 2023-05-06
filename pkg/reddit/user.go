@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type BotComment struct {
+type UserComment struct {
 	SubredditID    string `json:"subreddit_id"`
 	Subreddit      string `json:"subreddit"`
 	ID             string `json:"id"`
@@ -20,7 +20,7 @@ type BotComment struct {
 	Name           string `json:"name"`
 }
 
-func (rc RedditClient) GetBotNewestComments(limit int) ([]BotComment, error) {
+func (rc RedditClient) GetUserNewestComments(limit int) ([]UserComment, error) {
 	url := fmt.Sprintf("https://oauth.reddit.com/user/%s/comments?limit=%v", rc.username, limit)
 	req, err := rc.newRequest("GET", url, nil)
 	if err != nil {
@@ -38,15 +38,15 @@ func (rc RedditClient) GetBotNewestComments(limit int) ([]BotComment, error) {
 	}
 	defer resp.Body.Close()
 
-	var listing Listing[BotComment]
+	var listing Listing[UserComment]
 	err = json.NewDecoder(resp.Body).Decode(&listing)
 	if err != nil {
 		log.Error().Msgf("Error decoding response body:", err)
 		return nil, err
 	}
-	var botComments []BotComment
+	var userComments []UserComment
 	for _, child := range listing.Data.Children {
-		botComments = append(botComments, child.Data)
+		userComments = append(userComments, child.Data)
 	}
-	return botComments, nil
+	return userComments, nil
 }
