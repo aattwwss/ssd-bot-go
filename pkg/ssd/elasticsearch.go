@@ -25,3 +25,13 @@ func (tpu *EsSSDRepository) Search(s string) ([]SSD, error) {
 	//TODO implement this
 	return nil, nil
 }
+
+func (tpu *EsSSDRepository) Insert(ssd SSD) error {
+	//TODO implement this
+	return nil
+}
+
+func (tpu *EsSSDRepository) Update(ssd SSD) error {
+	//TODO implement this
+	return nil
+}

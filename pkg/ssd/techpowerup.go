@@ -19,3 +19,13 @@ func (tpu *TpuSSDRepository) Search(s string) ([]SSD, error) {
 	//TODO implement this
 	return nil, nil
 }
+
+func (tpu *TpuSSDRepository) Insert(ssd SSD) error {
+	//TODO implement this
+	return nil
+}
+
+func (tpu *TpuSSDRepository) Update(ssd SSD) error {
+	//TODO implement this
+	return nil
+}
