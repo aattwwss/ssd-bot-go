@@ -33,7 +33,7 @@ type RedditClient struct {
 }
 
 const (
-	USER_AGENT = "SSD bot v1.0 by /u/_SSD_BOT_ github.com/aattwwss/ssd-bot-go" //need to set user agent to prevent getting blocked by reddit
+	USER_AGENT = "SSD bot v2.0 by /u/_SSD_BOT_ github.com/aattwwss/ssd-bot-go" //need to set user agent to prevent getting blocked by reddit
 )
 
 func NewRedditClient(clientId, clientSecret, username, password, accessToken string, expireTimeMilli int64, isDebug bool) (*RedditClient, error) {
