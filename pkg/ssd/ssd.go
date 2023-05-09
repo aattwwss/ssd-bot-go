@@ -6,7 +6,7 @@ import (
 )
 
 type SSDRepository interface {
-	GetById(id string) (SSD, error)
+	FindById(id string) (*SSD, error)
 	Insert(ssd SSD) error
 	Update(ssd SSD) error
 	Search(s string) ([]SSD, error)

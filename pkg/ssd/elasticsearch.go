@@ -16,9 +16,9 @@ func NewEsSSDRepository(host, port, accessKey, accessSecret string) *EsSSDReposi
 	}
 }
 
-func (tpu *EsSSDRepository) GetById(id string) (SSD, error) {
+func (tpu *EsSSDRepository) FindById(id string) (*SSD, error) {
 	//TODO implement this
-	return SSD{}, nil
+	return &SSD{}, nil
 }
 
 func (tpu *EsSSDRepository) Search(s string) ([]SSD, error) {

@@ -1,18 +1,20 @@
 package ssd
 
 type TpuSSDRepository struct {
-	apikey string
+	username string
+	apikey   string
 }
 
-func NewTpuSSDRepository(apiKey string) *TpuSSDRepository {
+func NewTpuSSDRepository(username, apiKey string) *TpuSSDRepository {
 	return &TpuSSDRepository{
-		apikey: apiKey,
+		username: username,
+		apikey:   apiKey,
 	}
 }
 
-func (tpu *TpuSSDRepository) GetById(id string) (SSD, error) {
+func (tpu *TpuSSDRepository) FindById(id string) (*SSD, error) {
 	//TODO implement this
-	return SSD{}, nil
+	return &SSD{}, nil
 }
 
 func (tpu *TpuSSDRepository) Search(s string) ([]SSD, error) {
