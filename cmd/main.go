@@ -30,6 +30,7 @@ type config struct {
 	Username       string `env:"BOT_USERNAME,notEmpty"`
 	Password       string `env:"BOT_PASSWORD,notEmpty"`
 	TPUHost        string `env:"TPU_HOST,notEmpty"`
+	TPUUsername    string `env:"TPU_USERNAME,notEmpty"`
 	TPUSecret      string `env:"TPU_SECRET,notEmpty"`
 	EsAccessKey    string `env:"ES_ACCESS_KEY,notEmpty"`
 	EsAccessSecret string `env:"ES_ACCESS_SECRET,notEmpty"`

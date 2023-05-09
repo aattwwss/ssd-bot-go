@@ -9,7 +9,7 @@ type SSDRepository interface {
 	FindById(id string) (*SSD, error)
 	Insert(ssd SSD) error
 	Update(ssd SSD) error
-	Search(s string) ([]SSD, error)
+	Search(s string) ([]BasicSSD, error)
 }
 
 type SSD struct {
@@ -44,6 +44,14 @@ type Flash struct {
 	Name         string `json:"name"`
 	Type         string `json:"type"`
 	Layers       string `json:"layers"`
+}
+
+type BasicSSD struct {
+	DriveID      string `json:"driveId"`
+	Manufacturer string `json:"mfgr"`
+	Name         string `json:"name"`
+	Capacity     string `json:"capacity"`
+	FormFactor   string `json:"formFactor"`
 }
 
 // type SSD struct {

@@ -21,7 +21,7 @@ func (tpu *EsSSDRepository) FindById(id string) (*SSD, error) {
 	return &SSD{}, nil
 }
 
-func (tpu *EsSSDRepository) Search(s string) ([]SSD, error) {
+func (tpu *EsSSDRepository) Search(s string) ([]BasicSSD, error) {
 	//TODO implement this
 	return nil, nil
 }
