@@ -35,13 +35,11 @@ func TestTpuFindById(t *testing.T) {
 	defer server.Close()
 
 	tpu := NewTpuSSDRepository(server.URL, "username", "apikey")
-	// Call the getUserData function with the mock server URL
 	ssd, err := tpu.FindById("1461")
 	if err != nil {
 		t.Errorf("Error getting ssd data: %s", err)
 	}
 
-	// Check that the returned user has the expected values
 	if ssd.DriveID != "1461" {
 		t.Errorf("Expected drive id to be 1461, got %s", ssd.DriveID)
 	}
@@ -61,13 +59,11 @@ func TestTpuSearch(t *testing.T) {
 	defer server.Close()
 
 	tpu := NewTpuSSDRepository(server.URL, "username", "apikey")
-	// Call the getUserData function with the mock server URL
 	ssds, err := tpu.Search("search")
 	if err != nil {
 		t.Errorf("Error searching ssd data: %s", err)
 	}
 
-	// Check that the returned user has the expected values
 	if len(ssds) != 4 {
 		t.Errorf("Expected length of ssds to be 4, got %v", len(ssds))
 	}
