@@ -54,7 +54,7 @@ func TestTpuFindById(t *testing.T) {
 }
 
 func TestTpuSearch(t *testing.T) {
-	// sCreate a mock server that responds with JSON data
+	// Create a mock server that responds with JSON data
 	server := setup(t)
 	defer server.Close()
 
