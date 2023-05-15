@@ -63,6 +63,7 @@ func (esRepo *EsSSDRepository) doSearch(ctx context.Context, query map[string]in
 		log.Error().Msgf("Error encoding query: %s", err)
 		return errors.New("error decoding query")
 	}
+	log.Info().Msgf("asa" + buf.String())
 	es := esRepo.EsClient
 	res, err := es.Search(
 		es.Search.WithContext(ctx),

@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
+
+	"github.com/aattwwss/ssd-bot-go/elasticutil"
 	"github.com/aattwwss/ssd-bot-go/pkg/reddit"
+	"github.com/aattwwss/ssd-bot-go/pkg/ssd"
 	"github.com/caarlos0/env/v8"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
@@ -18,10 +22,14 @@ func main() {
 		log.Fatal().Msgf("Parse env error: %v", err)
 	}
 
-	_, err = reddit.NewRedditClient(config.ClientId, config.ClientSecret, config.Username, config.Password, config.Token, config.ExpireTimeMilli, config.IsDebug)
+	_, err = reddit.NewRedditClient(config.ClientId, config.ClientSecret, config.Username, config.Password, config.Token, config.ExpireTimeMilli, config.OverrideOldBot, config.IsDebug)
 	if err != nil {
 		log.Fatal().Msgf("Init reddit client error: %v", err)
 	}
+	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
+	repo := ssd.NewEsSSDRepository(es, "ssd-index")
+	ssd, _ := repo.FindById(context.Background(), "123")
+	log.Info().Msgf("%v", ssd)
 }
 
 type config struct {
