@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/aattwwss/ssd-bot-go/elasticutil"
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/rs/zerolog/log"
 )
@@ -23,7 +24,7 @@ func NewEsSSDRepository(esClient *elasticsearch.Client, index string) *EsSSDRepo
 }
 
 func (esRepo *EsSSDRepository) FindById(ctx context.Context, driveId string) (*SSD, error) {
-	var ssd SSD
+	var ssdResponse elasticutil.SearchResponse[SSD]
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"term": map[string]interface{}{
@@ -31,11 +32,14 @@ func (esRepo *EsSSDRepository) FindById(ctx context.Context, driveId string) (*S
 			},
 		},
 	}
-	err := esRepo.doSearch(ctx, query, &ssd)
+	err := esRepo.doSearch(ctx, query, &ssdResponse)
 	if err != nil {
 		return nil, err
 	}
-	return &ssd, nil
+	if len(ssdResponse.Hits.Hits) == 0 {
+		return nil, nil
+	}
+	return &ssdResponse.Hits.Hits[0].Source, nil
 }
 
 func (esRepo *EsSSDRepository) Search(context context.Context, s string) ([]BasicSSD, error) {
