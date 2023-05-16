@@ -35,6 +35,9 @@ func main() {
 	log.Info().Msgf("%v", ssd)
 	log.Info().Msgf("%v", ssds)
 	log.Info().Msgf("%v", sss)
+	ssd.DriveID = ssd.DriveID + "_new"
+	ssd.Capacity = "some capacity"
+	repo.Insert(context.Background(), *ssd)
 }
 
 type config struct {

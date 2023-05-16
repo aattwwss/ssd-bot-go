@@ -8,6 +8,7 @@ import (
 
 	"github.com/aattwwss/ssd-bot-go/elasticutil"
 	"github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/rs/zerolog/log"
 )
 
@@ -88,13 +89,39 @@ func (esRepo *EsSSDRepository) Search(ctx context.Context, s string) ([]SSD, err
 	return res, nil
 }
 
-func (esRepo *EsSSDRepository) Insert(context context.Context, ssd SSD) error {
+func (esRepo *EsSSDRepository) Update(ctx context.Context, ssd SSD) error {
 	//TODO implement this
 	return nil
 }
 
-func (esRepo *EsSSDRepository) Update(context context.Context, ssd SSD) error {
-	//TODO implement this
+func (esRepo *EsSSDRepository) Insert(ctx context.Context, ssd SSD) error {
+	// Build the request body.
+	data, err := json.Marshal(ssd)
+	if err != nil {
+		log.Error().Msgf("Error marshaling document: %s", err)
+		return err
+	}
+
+	// Set up the request object.
+	req := esapi.IndexRequest{
+		Index:      esRepo.Index,
+		DocumentID: ssd.DriveID,
+		Body:       bytes.NewReader(data),
+		Refresh:    "true",
+	}
+
+	// Perform the request with the client.
+	res, err := req.Do(ctx, esRepo.EsClient)
+	if err != nil {
+		log.Error().Msgf("Error getting response: %s", err)
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		log.Error().Msgf("[%s] Error indexing document ID=%d", res.Status(), ssd.DriveID)
+		return errors.New("index ssd response error")
+	}
 	return nil
 }
 
