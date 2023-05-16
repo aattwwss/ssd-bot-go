@@ -27,11 +27,14 @@ func main() {
 		log.Fatal().Msgf("Init reddit client error: %v", err)
 	}
 	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
-	repo := ssd.NewEsSSDRepository(es, "ssd-index")
+	var repo ssd.SSDRepository
+	repo = ssd.NewEsSSDRepository(es, "ssd-index")
 	ssd, _ := repo.FindById(context.Background(), "123")
-	ssds, _ := repo.Search(context.Background(), "corsair")
+	ssds, _ := repo.SearchBasic(context.Background(), "corsair")
+	sss, _ := repo.Search(context.Background(), "corsair")
 	log.Info().Msgf("%v", ssd)
 	log.Info().Msgf("%v", ssds)
+	log.Info().Msgf("%v", sss)
 }
 
 type config struct {

@@ -1,15 +1,17 @@
 package ssd
 
 import (
+	"context"
 	"fmt"
 	"strings"
 )
 
 type SSDRepository interface {
-	FindById(id string) (*SSD, error)
-	Insert(ssd SSD) error
-	Update(ssd SSD) error
-	Search(s string) ([]BasicSSD, error)
+	FindById(ctx context.Context, id string) (*SSD, error)
+	Insert(ctx context.Context, ssd SSD) error
+	Update(ctx context.Context, ssd SSD) error
+	SearchBasic(ctx context.Context, s string) ([]BasicSSD, error)
+	Search(ctx context.Context, s string) ([]SSD, error)
 }
 
 type SSD struct {

@@ -56,7 +56,7 @@ func (tpu *TpuSSDRepository) FindById(id string) (*SSD, error) {
 	return &tpuRes.Result, nil
 }
 
-func (tpu *TpuSSDRepository) Search(s string) ([]BasicSSD, error) {
+func (tpu *TpuSSDRepository) SearchBasic(s string) ([]BasicSSD, error) {
 	url := tpu.buildUrl() + fmt.Sprintf("/lookup?key=%s&id=%s", tpu.apikey, s)
 
 	response, err := http.Get(url)
@@ -77,6 +77,10 @@ func (tpu *TpuSSDRepository) Search(s string) ([]BasicSSD, error) {
 		return nil, errors.New("tpu lookup status error: " + err.Error())
 	}
 	return tpuRes.Result, nil
+}
+
+func (tpu *TpuSSDRepository) Search(s string) ([]SSD, error) {
+	return nil, nil
 }
 
 func (tpu *TpuSSDRepository) Insert(ssd SSD) error {

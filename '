@@ -63,12 +63,13 @@ func (esRepo *EsSSDRepository) SearchBasic(ctx context.Context, s string) ([]Bas
 		res = append(res, hit.Source)
 	}
 	return res, nil
+
 }
 
 func (esRepo *EsSSDRepository) Search(ctx context.Context, s string) ([]SSD, error) {
 	//TODO implement this
-	var ssdResponse elasticutil.SearchResponse[SSD]
-	var res []SSD
+	var ssdResponse elasticutil.SearchResponse[BasicSSD]
+	var res []BasicSSD
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"multi_match": map[string]interface{}{
@@ -86,8 +87,8 @@ func (esRepo *EsSSDRepository) Search(ctx context.Context, s string) ([]SSD, err
 		res = append(res, hit.Source)
 	}
 	return res, nil
-}
 
+}
 func (esRepo *EsSSDRepository) Insert(context context.Context, ssd SSD) error {
 	//TODO implement this
 	return nil
