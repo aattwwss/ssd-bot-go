@@ -1,0 +1,141 @@
+{
+    "mappings": {
+        "properties": {
+            "driveId": {
+                "type": "keyword"
+            },
+            "url": {
+                "type": "keyword"
+            },
+            "mfgr": {
+                "analyzer": "standard",
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
+            "name": {
+                "analyzer": "standard",
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
+            "capacity": {
+                "analyzer": "standard",
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
+            "formFactor": {
+                "analyzer": "standard",
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
+            "interface": {
+                "analyzer": "standard",
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
+            "protocol": {
+                "analyzer": "standard",
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
+            "dram": {
+                "type": "keyword"
+            },
+            "hmb": {
+                "type": "keyword"
+            },
+            "released": {
+                "type": "keyword"
+            },
+            "endurance": {
+                "type": "keyword"
+            },
+            "warranty": {
+                "type": "keyword"
+            },
+            "seqRead": {
+                "type": "keyword"
+            },
+            "seqWrite": {
+                "type": "keyword"
+            },
+            "controller": {
+                "type": "object",
+                "properties": {
+                    "mfgr": {
+                        "type": "keyword"
+                    },
+                    "name": {
+                        "type": "keyword"
+                    },
+                    "nameShort": {
+                        "type": "keyword"
+                    },
+                    "channels": {
+                        "type": "long"
+                    }
+                }
+            },
+            "flash": {
+                "type": "object",
+                "properties": {
+                    "mfgr": {
+                        "analyzer": "standard",
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "name": {
+                        "analyzer": "standard",
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "type": {
+                        "type": "keyword"
+                    },
+                    "layers": {
+                        "type": "keyword"
+                    }
+                }
+            }
+        }
+    }
+}
