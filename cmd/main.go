@@ -29,7 +29,9 @@ func main() {
 	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
 	repo := ssd.NewEsSSDRepository(es, "ssd-index")
 	ssd, _ := repo.FindById(context.Background(), "123")
+	ssds, _ := repo.Search(context.Background(), "corsair")
 	log.Info().Msgf("%v", ssd)
+	log.Info().Msgf("%v", ssds)
 }
 
 type config struct {

@@ -42,9 +42,28 @@ func (esRepo *EsSSDRepository) FindById(ctx context.Context, driveId string) (*S
 	return &ssdResponse.Hits.Hits[0].Source, nil
 }
 
-func (esRepo *EsSSDRepository) Search(context context.Context, s string) ([]BasicSSD, error) {
+func (esRepo *EsSSDRepository) Search(ctx context.Context, s string) ([]BasicSSD, error) {
 	//TODO implement this
-	return nil, nil
+	var ssdResponse elasticutil.SearchResponse[BasicSSD]
+	var res []BasicSSD
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"multi_match": map[string]interface{}{
+				"query": s,
+			},
+		},
+	}
+	err := esRepo.doSearch(ctx, query, &ssdResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Info().Msgf("length: %v", len(ssdResponse.Hits.Hits))
+	for _, hit := range ssdResponse.Hits.Hits {
+		res = append(res, hit.Source)
+	}
+	return res, nil
+
 }
 
 func (esRepo *EsSSDRepository) Insert(context context.Context, ssd SSD) error {
@@ -63,7 +82,6 @@ func (esRepo *EsSSDRepository) doSearch(ctx context.Context, query map[string]in
 		log.Error().Msgf("Error encoding query: %s", err)
 		return errors.New("error decoding query")
 	}
-	log.Info().Msgf("asa" + buf.String())
 	es := esRepo.EsClient
 	res, err := es.Search(
 		es.Search.WithContext(ctx),

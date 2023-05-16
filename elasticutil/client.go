@@ -31,25 +31,20 @@ func NewElasticsearchClient(address string) (*elasticsearch.Client, error) {
 }
 
 func GetInfo(es *elasticsearch.Client) {
-	log.Error().Msgf("test2")
 	var r map[string]interface{}
 	res, err := es.Info()
 	if err != nil {
-		log.Info().Msgf("test")
 		log.Error().Msgf("Error getting response: %s", err)
 	}
 	defer res.Body.Close()
 	// Check response status
 	if res.IsError() {
-		log.Info().Msgf("test")
 		log.Error().Msgf("Error: %s", res.String())
 	}
 	// Deserialize the response into a map.
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		log.Info().Msgf("test")
 		log.Error().Msgf("Error parsing the response body: %s", err)
 	}
-	log.Info().Msgf("test")
 	// Print client and server version numbers.
 	log.Info().Msgf("Client: %s", elasticsearch.Version)
 	log.Info().Msgf("Server: %s", r["version"].(map[string]interface{})["number"])
