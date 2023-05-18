@@ -1,6 +1,7 @@
 package ssd
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,7 +32,7 @@ func (tpu *TpuSSDRepository) buildUrl() string {
 	return fmt.Sprintf("%s/ssd-specs/api/%s/v1", tpu.host, tpu.username)
 }
 
-func (tpu *TpuSSDRepository) FindById(id string) (*SSD, error) {
+func (tpu *TpuSSDRepository) FindById(ctx context.Context, id string) (*SSD, error) {
 	url := tpu.buildUrl() + fmt.Sprintf("/query?key=%s&id=%s", tpu.apikey, id)
 
 	response, err := http.Get(url)
@@ -56,7 +57,7 @@ func (tpu *TpuSSDRepository) FindById(id string) (*SSD, error) {
 	return &tpuRes.Result, nil
 }
 
-func (tpu *TpuSSDRepository) SearchBasic(s string) ([]BasicSSD, error) {
+func (tpu *TpuSSDRepository) SearchBasic(ctx context.Context, s string) ([]BasicSSD, error) {
 	url := tpu.buildUrl() + fmt.Sprintf("/lookup?key=%s&id=%s", tpu.apikey, s)
 
 	response, err := http.Get(url)
@@ -79,16 +80,16 @@ func (tpu *TpuSSDRepository) SearchBasic(s string) ([]BasicSSD, error) {
 	return tpuRes.Result, nil
 }
 
-func (tpu *TpuSSDRepository) Search(s string) ([]SSD, error) {
+func (tpu *TpuSSDRepository) Search(ctx context.Context, s string) ([]SSD, error) {
 	return nil, nil
 }
 
-func (tpu *TpuSSDRepository) Insert(ssd SSD) error {
+func (tpu *TpuSSDRepository) Insert(ctx context.Context, ssd SSD) error {
 	//TODO implement this
 	return nil
 }
 
-func (tpu *TpuSSDRepository) Update(ssd SSD) error {
+func (tpu *TpuSSDRepository) Update(ctx context.Context, ssd SSD) error {
 	//TODO implement this
 	return nil
 }

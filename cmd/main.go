@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/aattwwss/ssd-bot-go/elasticutil"
 	"github.com/aattwwss/ssd-bot-go/pkg/reddit"
@@ -27,17 +28,27 @@ func main() {
 		log.Fatal().Msgf("Init reddit client error: %v", err)
 	}
 	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
-	var repo ssd.SSDRepository
-	repo = ssd.NewEsSSDRepository(es, "ssd-index")
-	ssd, _ := repo.FindById(context.Background(), "123")
-	ssds, _ := repo.SearchBasic(context.Background(), "corsair")
-	sss, _ := repo.Search(context.Background(), "corsair")
-	log.Info().Msgf("%v", ssd)
-	log.Info().Msgf("%v", ssds)
-	log.Info().Msgf("%v", sss)
-	ssd.DriveID = ssd.DriveID + "_new"
-	ssd.Capacity = "some capacity"
-	repo.Insert(context.Background(), *ssd)
+	esRepo := ssd.NewEsSSDRepository(es, "ssd-index")
+	tpuRepo := ssd.NewTpuSSDRepository(config.TPUHost, config.TPUUsername, config.TPUSecret)
+	ssdSync := ssd.SSDSync{
+		StartId: 40,
+		// EndId:    50,
+		Delay:    time.Duration(100),
+		IdToSkip: []int{},
+	}
+	err = ssdSync.Sync(context.Background(), tpuRepo, esRepo)
+	if err != nil {
+		log.Fatal().Msgf("sync error", err)
+	}
+	// ssd, _ := esRepo.FindById(context.Background(), "123")
+	// ssds, _ := esRepo.SearchBasic(context.Background(), "corsair")
+	// sss, _ := esRepo.Search(context.Background(), "corsair")
+	// log.Info().Msgf("%v", ssd)
+	// log.Info().Msgf("%v", ssds)
+	// log.Info().Msgf("%v", sss)
+	// ssd.DriveID = ssd.DriveID + "_new"
+	// ssd.Capacity = "some capacity"
+	// esRepo.Insert(context.Background(), *ssd)
 }
 
 type config struct {
