@@ -31,8 +31,7 @@ func main() {
 	esRepo := ssd.NewEsSSDRepository(es, "ssd-index")
 	tpuRepo := ssd.NewTpuSSDRepository(config.TPUHost, config.TPUUsername, config.TPUSecret)
 	ssdSync := ssd.SSDSync{
-		StartId: 40,
-		// EndId:    50,
+		StartId:  1,
 		Delay:    time.Duration(100),
 		IdToSkip: []int{},
 	}

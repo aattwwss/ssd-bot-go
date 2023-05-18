@@ -23,7 +23,6 @@ func (s SSDSync) Sync(ctx context.Context, source SSDRepository, destination SSD
 	if s.EndId == 0 {
 		s.EndId = 1490
 	}
-
 	for id := s.StartId; id <= s.EndId; id++ {
 		if contains(s.IdToSkip, id) {
 			log.Info().Msgf("Skipping id: %v", id)
