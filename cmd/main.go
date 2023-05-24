@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"time"
+	"regexp"
+	"strings"
 
 	"github.com/aattwwss/ssd-bot-go/elasticutil"
 	"github.com/aattwwss/ssd-bot-go/pkg/reddit"
@@ -29,25 +30,37 @@ func main() {
 	}
 	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
 	esRepo := ssd.NewEsSSDRepository(es, "ssd-index")
-	tpuRepo := ssd.NewTpuSSDRepository(config.TPUHost, config.TPUUsername, config.TPUSecret)
-	ssdSync := ssd.SSDSync{
-		StartId:  1,
-		Delay:    time.Duration(100),
-		IdToSkip: []int{},
-	}
-	err = ssdSync.Sync(context.Background(), tpuRepo, esRepo)
-	if err != nil {
-		log.Fatal().Msgf("sync error", err)
-	}
+	// tpuRepo := ssd.NewTpuSSDRepository(config.TPUHost, config.TPUUsername, config.TPUSecret)
+	// ssdSync := ssd.SSDSync{
+	// 	StartId:  1,
+	// 	Delay:    time.Duration(100),
+	// 	IdToSkip: []int{},
+	// }
+	// err = ssdSync.Sync(context.Background(), tpuRepo, esRepo)
+	// if err != nil {
+	// 	log.Fatal().Msgf("sync error", err)
+	// }
 	// ssd, _ := esRepo.FindById(context.Background(), "123")
 	// ssds, _ := esRepo.SearchBasic(context.Background(), "corsair")
-	// sss, _ := esRepo.Search(context.Background(), "corsair")
+	title := "[SSD] Sabrent Rocket 2230 NVMe 4.0 1TB - $102.99 ($109.99-$7 with code SSCSA536)"
+	sss, _ := esRepo.Search(context.Background(), cleanTitle(title))
 	// log.Info().Msgf("%v", ssd)
 	// log.Info().Msgf("%v", ssds)
-	// log.Info().Msgf("%v", sss)
+	log.Info().Msgf("cleaned title: %v", cleanTitle(title))
+	log.Info().Msgf("%v", sss[0])
 	// ssd.DriveID = ssd.DriveID + "_new"
 	// ssd.Capacity = "some capacity"
 	// esRepo.Insert(context.Background(), *ssd)
+}
+
+func cleanTitle(s string) string {
+	s = strings.ToLower(s)
+	s = regexp.MustCompile(`\[[^\]]+\]`).ReplaceAllString(s, "")
+	stringsToReplace := []string{"ssd", "m2", "m.2", "nvme", "pcie", "gen"}
+	for _, toReplace := range stringsToReplace {
+		s = strings.ReplaceAll(s, toReplace, "")
+	}
+	return s
 }
 
 type config struct {

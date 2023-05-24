@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"github.com/aattwwss/ssd-bot-go/elasticutil"
 	"github.com/elastic/go-elasticsearch/v7"
@@ -66,14 +67,14 @@ func (esRepo *EsSSDRepository) SearchBasic(ctx context.Context, s string) ([]Bas
 	return res, nil
 }
 
-func (esRepo *EsSSDRepository) Search(ctx context.Context, s string) ([]SSD, error) {
+func (esRepo *EsSSDRepository) Search(ctx context.Context, searchQuery string) ([]SSD, error) {
 	//TODO implement this
 	var ssdResponse elasticutil.SearchResponse[SSD]
 	var res []SSD
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"multi_match": map[string]interface{}{
-				"query": s,
+				"query": searchQuery,
 			},
 		},
 	}
@@ -84,9 +85,19 @@ func (esRepo *EsSSDRepository) Search(ctx context.Context, s string) ([]SSD, err
 
 	log.Info().Msgf("length: %v", len(ssdResponse.Hits.Hits))
 	for _, hit := range ssdResponse.Hits.Hits {
-		res = append(res, hit.Source)
+		if sanityCheck(searchQuery, hit.Source) {
+			res = append(res, hit.Source)
+		}
 	}
 	return res, nil
+}
+
+// a sanityCheck to ensure we only return the ssd we know is correct
+func sanityCheck(searchQuery string, ssd SSD) bool {
+	if !strings.Contains(strings.ToLower(searchQuery), strings.ToLower(ssd.Manufacturer)) || !strings.Contains(strings.ToLower(searchQuery), strings.ToLower(strings.ReplaceAll(ssd.Manufacturer, " ", ""))) {
+		return false
+	}
+	return true
 }
 
 func (esRepo *EsSSDRepository) Update(ctx context.Context, ssd SSD) error {
