@@ -60,7 +60,6 @@ func (esRepo *EsSSDRepository) SearchBasic(ctx context.Context, s string) ([]Bas
 		return nil, err
 	}
 
-	log.Info().Msgf("length: %v", len(ssdResponse.Hits.Hits))
 	for _, hit := range ssdResponse.Hits.Hits {
 		res = append(res, hit.Source)
 	}
@@ -83,7 +82,6 @@ func (esRepo *EsSSDRepository) Search(ctx context.Context, searchQuery string) (
 		return nil, err
 	}
 
-	log.Info().Msgf("length: %v", len(ssdResponse.Hits.Hits))
 	for _, hit := range ssdResponse.Hits.Hits {
 		if sanityCheck(searchQuery, hit.Source) {
 			res = append(res, hit.Source)

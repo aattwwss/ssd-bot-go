@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
+	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -30,6 +33,7 @@ func main() {
 	}
 	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
 	esRepo := ssd.NewEsSSDRepository(es, "ssd-index")
+	doTest(esRepo)
 	// tpuRepo := ssd.NewTpuSSDRepository(config.TPUHost, config.TPUUsername, config.TPUSecret)
 	// ssdSync := ssd.SSDSync{
 	// 	StartId:  1,
@@ -42,12 +46,12 @@ func main() {
 	// }
 	// ssd, _ := esRepo.FindById(context.Background(), "123")
 	// ssds, _ := esRepo.SearchBasic(context.Background(), "corsair")
-	title := "[SSD] Sabrent Rocket 2230 NVMe 4.0 1TB - $102.99 ($109.99-$7 with code SSCSA536)"
-	sss, _ := esRepo.Search(context.Background(), cleanTitle(title))
+	// title := "[SSD] Sabrent Rocket 2230 NVMe 4.0 1TB - $102.99 ($109.99-$7 with code SSCSA536)"
+	// sss, _ := esRepo.Search(context.Background(), cleanTitle(title))
 	// log.Info().Msgf("%v", ssd)
 	// log.Info().Msgf("%v", ssds)
-	log.Info().Msgf("cleaned title: %v", cleanTitle(title))
-	log.Info().Msgf("%v", sss[0])
+	// log.Info().Msgf("cleaned title: %v", cleanTitle(title))
+	// log.Info().Msgf("%v", sss[0])
 	// ssd.DriveID = ssd.DriveID + "_new"
 	// ssd.Capacity = "some capacity"
 	// esRepo.Insert(context.Background(), *ssd)
@@ -85,4 +89,69 @@ type config struct {
 	Token           string `env:"BOT_ACCESS_TOKEN"`
 	ExpireTimeMilli int64  `env:"BOT_TOKEN_EXPIRE_MILLI"`
 	IsDebug         bool   `env:"IS_DEBUG"`
+}
+
+func doTest(esRepo *ssd.EsSSDRepository) {
+	// Open the input CSV file for reading
+	inputFile, err := os.Open("test/input.csv")
+	if err != nil {
+		panic(err)
+	}
+	defer inputFile.Close()
+
+	// Open a temporary output file for writing
+	outputFile, err := os.Create("test/output.csv")
+	if err != nil {
+		panic(err)
+	}
+	defer outputFile.Close()
+
+	// Read all the records
+	reader := csv.NewReader(inputFile)
+	reader.Comma = '\t'
+	records, err := reader.ReadAll()
+	if err != nil {
+		panic(err)
+	}
+
+	writer := csv.NewWriter(outputFile)
+	writer.Comma = '|'
+
+	// Print each record
+	for _, record := range records {
+		ssds, _ := esRepo.Search(context.Background(), cleanTitle(record[1]))
+		var modelAndName string
+		if len(ssds) != 0 {
+			modelAndName = fmt.Sprintf("%s %s", ssds[0].Manufacturer, ssds[0].Name)
+		}
+		record = append(record, modelAndName)
+		writer.Write(record)
+		writer.Flush()
+	}
+
+	// for {
+	// 	// Read a line from the input CSV file
+	// 	if err != nil {
+	// 		break // End of file
+	// 	}
+	//
+	// 	// Process the line (example: convert to uppercase)
+	//
+	// 	// Write the processed line to the output CSV file
+	// 	err = writer.Write(line)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	//
+	// 	// Flush the writer to ensure the line is written immediately
+	// 	writer.Flush()
+	//
+	// 	// Check for any writer error
+	// 	if err := writer.Error(); err != nil {
+	// 		panic(err)
+	// 	}
+	//
+	// 	// Print the processed line
+	// 	fmt.Println(line)
+	// }
 }
