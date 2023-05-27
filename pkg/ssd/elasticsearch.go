@@ -91,8 +91,12 @@ func (esRepo *EsSSDRepository) Search(ctx context.Context, searchQuery string) (
 }
 
 // a sanityCheck to ensure we only return the ssd we know is correct
+// remove false positive as much as possible
 func sanityCheck(searchQuery string, ssd SSD) bool {
-	if !strings.Contains(strings.ToLower(searchQuery), strings.ToLower(ssd.Manufacturer)) || !strings.Contains(strings.ToLower(searchQuery), strings.ToLower(strings.ReplaceAll(ssd.Manufacturer, " ", ""))) {
+	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssd.Manufacturer, " ", ""))) {
+		return false
+	}
+	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssd.Name, " ", ""))) {
 		return false
 	}
 	return true

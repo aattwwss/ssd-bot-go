@@ -60,9 +60,18 @@ func main() {
 func cleanTitle(s string) string {
 	s = strings.ToLower(s)
 	s = regexp.MustCompile(`\[[^\]]+\]`).ReplaceAllString(s, "")
-	stringsToReplace := []string{"ssd", "m2", "m.2", "nvme", "pcie", "gen"}
-	for _, toReplace := range stringsToReplace {
+	stringsToRemove := []string{"ssd", "m2", "m.2", "nvme", "pcie", "gen"}
+	for _, toReplace := range stringsToRemove {
 		s = strings.ReplaceAll(s, toReplace, "")
+	}
+
+	stringsToReplace := map[string]string{
+		" wd": " western digital",
+	}
+	for k, v := range stringsToReplace {
+		if strings.Contains(s, k) {
+			s = s + v
+		}
 	}
 	return s
 }
