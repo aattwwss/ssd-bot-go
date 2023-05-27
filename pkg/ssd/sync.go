@@ -21,7 +21,7 @@ type SSDSync struct {
 
 func (s SSDSync) Sync(ctx context.Context, source SSDRepository, destination SSDRepository) error {
 	if s.EndId == 0 {
-		s.EndId = 1490
+		s.EndId = 1500
 	}
 	for id := s.StartId; id <= s.EndId; id++ {
 		if contains(s.IdToSkip, id) {

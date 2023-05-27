@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/aattwwss/ssd-bot-go/elasticutil"
 	"github.com/aattwwss/ssd-bot-go/pkg/reddit"
@@ -14,6 +15,10 @@ import (
 	"github.com/caarlos0/env/v8"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
+)
+
+const (
+	LINK_PREFIX = "t3_"
 )
 
 func main() {
@@ -57,6 +62,53 @@ func main() {
 	// esRepo.Insert(context.Background(), *ssd)
 }
 
+func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ssd.EsSSDRepository) error {
+	newSubmissions, err := rc.GetNewSubmissions(config.Subreddit, 25)
+	if err != nil {
+		return err
+	}
+
+	botComments, err := rc.GetUserNewestComments(25)
+	if err != nil {
+		return err
+	}
+
+	botCommentsMap := map[string]bool{}
+	for _, comment := range botComments {
+		linkId := strings.TrimPrefix(comment.LinkID, LINK_PREFIX)
+		botCommentsMap[linkId] = true
+	}
+
+	for _, post := range newSubmissions {
+		if !strings.Contains(strings.ToUpper(post.LinkFlairText), "SSD") {
+			continue
+		}
+		_, ok := botCommentsMap[post.ID]
+		if ok {
+			log.Info().Msgf("Already commented on this submission: %s", post.Title)
+			continue
+		}
+		log.Info().Msgf("Found submission: %s", post.Title)
+		ssdList, err := esRepo.Search(ctx, cleanTitle(post.Title))
+		if err != nil {
+			return err
+		}
+		if len(ssdList) == 0 {
+			log.Info().Msgf("SSD not found in database: %s", post.Title)
+			continue
+		}
+		found := ssdList[0]
+		err = rc.SubmitComment(post.ID, found.ToMarkdown())
+		if err != nil {
+			return err
+		}
+		log.Info().Msgf("Post submitted for: %v", found)
+		//rate limit submission of post to prevent getting rejected
+		time.Sleep(10 * time.Second)
+	}
+
+	return nil
+}
 func cleanTitle(s string) string {
 	s = strings.ToLower(s)
 	s = regexp.MustCompile(`\[[^\]]+\]`).ReplaceAllString(s, "")
@@ -82,6 +134,7 @@ type config struct {
 	ClientSecret string `env:"CLIENT_SECRET,notEmpty"`
 	Username     string `env:"BOT_USERNAME,notEmpty"`
 	Password     string `env:"BOT_PASSWORD,notEmpty"`
+	Subreddit    string `env:"SUBREDDIT,notEmpty"`
 
 	// techpowerup config
 	TPUHost     string `env:"TPU_HOST,notEmpty"`
