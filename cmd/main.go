@@ -32,13 +32,14 @@ func main() {
 		log.Fatal().Msgf("Parse env error: %v", err)
 	}
 
-	_, err = reddit.NewRedditClient(config.ClientId, config.ClientSecret, config.Username, config.Password, config.Token, config.ExpireTimeMilli, config.OverrideOldBot, config.IsDebug)
+	rc, err := reddit.NewRedditClient(config.ClientId, config.ClientSecret, config.Username, config.Password, config.Token, config.ExpireTimeMilli, config.OverrideOldBot, config.IsDebug)
 	if err != nil {
 		log.Fatal().Msgf("Init reddit client error: %v", err)
 	}
 	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
 	esRepo := ssd.NewEsSSDRepository(es, "ssd-index")
-	doTest(esRepo)
+	// doTest(esRepo)
+	run(context.Background(), config, rc, esRepo)
 	// tpuRepo := ssd.NewTpuSSDRepository(config.TPUHost, config.TPUUsername, config.TPUSecret)
 	// ssdSync := ssd.SSDSync{
 	// 	StartId:  1,
@@ -80,9 +81,13 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 	}
 
 	for _, post := range newSubmissions {
-		if !strings.Contains(strings.ToUpper(post.LinkFlairText), "SSD") {
+		log.Info().Msg(post.Title)
+		if !strings.Contains(strings.ToUpper(post.Title), "SSD") {
 			continue
 		}
+		// if !strings.Contains(strings.ToUpper(post.LinkFlairText), "SSD") {
+		// 	continue
+		// }
 		_, ok := botCommentsMap[post.ID]
 		if ok {
 			log.Info().Msgf("Already commented on this submission: %s", post.Title)
@@ -91,7 +96,8 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 		log.Info().Msgf("Found submission: %s", post.Title)
 		ssdList, err := esRepo.Search(ctx, cleanTitle(post.Title))
 		if err != nil {
-			return err
+			log.Error().Msgf("Error searching for ssd: %v", err.Error())
+			continue
 		}
 		if len(ssdList) == 0 {
 			log.Info().Msgf("SSD not found in database: %s", post.Title)

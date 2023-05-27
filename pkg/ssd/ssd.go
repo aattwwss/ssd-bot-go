@@ -100,14 +100,15 @@ func (ssd SSD) ToMarkdown() string {
 		fmt.Sprintf("The %s %s is a *%s* SSD.", ssd.Manufacturer, ssd.Name, ssd.Flash.Type),
 		fmt.Sprintf("* Interface: **%s**", ssd.Interface),
 		fmt.Sprintf("* Form Factor: **%s**", ssd.FormFactor),
-		fmt.Sprintf("* Controller: **%s**", fmt.Sprintf("%s %s", ssd.Controller.Manufacturer, ssd.Controller.Name)),
+		fmt.Sprintf("* Controller: **%s %s**", ssd.Controller.Manufacturer, ssd.Controller.Name),
 		fmt.Sprintf("* DRAM: **%s**", ssd.Dram),
 		fmt.Sprintf("* HMB: **%s**", ssd.Hmb),
 		fmt.Sprintf("* NAND Brand: **%s**", ssd.Flash.Manufacturer),
 		fmt.Sprintf("* NAND Type: **%s**", ssd.Flash.Type),
 		// fmt.Sprintf("* 2D/3D NAND: **%s**", ssd.NandDimension),
-		fmt.Sprintf("* R/W: **%s**", fmt.Sprintf("%s / %s", ssd.SeqRead, ssd.SeqWrite)),
+		fmt.Sprintf("* R/W: **%s - %s**", ssd.SeqRead, ssd.SeqWrite),
 		fmt.Sprintf("* Price History: **[camelcamelcamel](https://camelcamelcamel.com/search?sq=%s)**", ssd.Manufacturer+" "+ssd.Name),
+		fmt.Sprintf("* Detailed Link: **[TechPowerUp](%s)**", ssd.URL),
 		fmt.Sprintf("---\n%s", ref),
 	}
 	return strings.Join(arr, "\n\n")
