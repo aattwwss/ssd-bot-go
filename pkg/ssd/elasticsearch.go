@@ -96,10 +96,18 @@ func sanityCheck(searchQuery string, ssd SSD) bool {
 	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssd.Manufacturer, " ", ""))) {
 		return false
 	}
-	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssd.Name, " ", ""))) {
+	cleanedName := cleanName(ssd.Name)
+	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(cleanedName, " ", ""))) {
 		return false
 	}
 	return true
+}
+
+// cleanName will remove any redundant characters so that the sanity check can
+// be more accurate. Ideally we would want to do this in our persistence layer,
+// but I'm lazy
+func cleanName(name string) string {
+	return strings.ReplaceAll(name, "(w/ Heatsink)", "")
 }
 
 func (esRepo *EsSSDRepository) Update(ctx context.Context, ssd SSD) error {

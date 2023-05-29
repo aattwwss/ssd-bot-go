@@ -35,32 +35,27 @@ func main() {
 	rc, err := reddit.NewRedditClient(config.ClientId, config.ClientSecret, config.Username, config.Password, config.Token, config.ExpireTimeMilli, config.OverrideOldBot, config.IsDebug)
 	if err != nil {
 		log.Fatal().Msgf("Init reddit client error: %v", err)
+		log.Info().Msgf("Init reddit client error: %v", rc)
 	}
 	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
 	esRepo := ssd.NewEsSSDRepository(es, "ssd-index")
 	// doTest(esRepo)
 	run(context.Background(), config, rc, esRepo)
 	// tpuRepo := ssd.NewTpuSSDRepository(config.TPUHost, config.TPUUsername, config.TPUSecret)
-	// ssdSync := ssd.SSDSync{
-	// 	StartId:  1,
-	// 	Delay:    time.Duration(100),
-	// 	IdToSkip: []int{},
-	// }
-	// err = ssdSync.Sync(context.Background(), tpuRepo, esRepo)
-	// if err != nil {
-	// 	log.Fatal().Msgf("sync error", err)
-	// }
-	// ssd, _ := esRepo.FindById(context.Background(), "123")
-	// ssds, _ := esRepo.SearchBasic(context.Background(), "corsair")
-	// title := "[SSD] Sabrent Rocket 2230 NVMe 4.0 1TB - $102.99 ($109.99-$7 with code SSCSA536)"
-	// sss, _ := esRepo.Search(context.Background(), cleanTitle(title))
-	// log.Info().Msgf("%v", ssd)
-	// log.Info().Msgf("%v", ssds)
-	// log.Info().Msgf("cleaned title: %v", cleanTitle(title))
-	// log.Info().Msgf("%v", sss[0])
-	// ssd.DriveID = ssd.DriveID + "_new"
-	// ssd.Capacity = "some capacity"
-	// esRepo.Insert(context.Background(), *ssd)
+	// sync(tpuRepo, esRepo)
+}
+
+func sync(source, dest ssd.SSDRepository) {
+	ssdSync := ssd.SSDSync{
+		StartId:  1,
+		EndId:    1500,
+		Delay:    time.Duration(10),
+		IdToSkip: []int{},
+	}
+	err := ssdSync.Sync(context.Background(), source, dest)
+	if err != nil {
+		log.Fatal().Msgf("sync error", err)
+	}
 }
 
 func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ssd.EsSSDRepository) error {
@@ -80,37 +75,44 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 		botCommentsMap[linkId] = true
 	}
 
-	for _, post := range newSubmissions {
-		log.Info().Msg(post.Title)
-		if !strings.Contains(strings.ToUpper(post.Title), "SSD") {
+	for _, submission := range newSubmissions {
+		if !strings.Contains(strings.ToUpper(submission.LinkFlairText), "SSD") {
 			continue
 		}
-		// if !strings.Contains(strings.ToUpper(post.LinkFlairText), "SSD") {
-		// 	continue
-		// }
-		_, ok := botCommentsMap[post.ID]
+		var botCommented bool
+		comments, _ := rc.GetCommentsBySubmissionId(submission.ID, 100)
+		for _, comment := range comments {
+			botCommented = comment.Author == "SSDBot"
+		}
+		if config.OverrideOldBot && botCommented {
+			log.Info().Msgf("Another bot already commented on this submission: %s", submission.Title)
+			continue
+		}
+
+		_, ok := botCommentsMap[submission.ID]
 		if ok {
-			log.Info().Msgf("Already commented on this submission: %s", post.Title)
+			log.Info().Msgf("This bot already commented on this submission: %s", submission.Title)
 			continue
 		}
-		log.Info().Msgf("Found submission: %s", post.Title)
-		ssdList, err := esRepo.Search(ctx, cleanTitle(post.Title))
+
+		log.Info().Msgf("Found submission: %s", submission.Title)
+		ssdList, err := esRepo.Search(ctx, cleanTitle(submission.Title))
 		if err != nil {
-			log.Error().Msgf("Error searching for ssd: %v", err.Error())
+			log.Error().Msgf("Error searching for ssd: %v", err)
 			continue
 		}
 		if len(ssdList) == 0 {
-			log.Info().Msgf("SSD not found in database: %s", post.Title)
+			log.Info().Msgf("SSD not found in database: %s", submission.Title)
 			continue
 		}
 		found := ssdList[0]
-		err = rc.SubmitComment(post.ID, found.ToMarkdown())
+		err = rc.SubmitComment(submission.ID, found.ToMarkdown())
 		if err != nil {
 			return err
 		}
 		log.Info().Msgf("Post submitted for: %v", found)
 		//rate limit submission of post to prevent getting rejected
-		time.Sleep(10 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	return nil
