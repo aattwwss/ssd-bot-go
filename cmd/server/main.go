@@ -78,6 +78,7 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 			continue
 		}
 		if config.OverrideOldBot {
+			// do not comment if another bot already commented
 			botCommented := rc.IsCommentedByUser(submission.ID, "SSDBot")
 			if botCommented {
 				log.Info().Msgf("Another bot already commented on this submission: %s", submission.Title)
