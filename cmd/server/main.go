@@ -43,19 +43,6 @@ func main() {
 	run(context.Background(), config, rc, esRepo)
 }
 
-func sync(source, dest ssd.SSDRepository) {
-	ssdSync := ssd.SSDSync{
-		StartId:  1,
-		EndId:    1500,
-		Delay:    time.Duration(10),
-		IdToSkip: []int{},
-	}
-	err := ssdSync.Sync(context.Background(), source, dest)
-	if err != nil {
-		log.Fatal().Msgf("sync error", err)
-	}
-}
-
 func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ssd.EsSSDRepository) error {
 	newSubmissions, err := rc.GetNewSubmissions(config.Subreddit, 25)
 	if err != nil {
