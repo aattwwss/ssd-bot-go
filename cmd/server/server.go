@@ -68,7 +68,7 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 	}
 
 	for _, submission := range newSubmissions {
-		if !strings.Contains(strings.ToUpper(submission.LinkFlairText), "SSD") {
+		if !strings.Contains(strings.ToUpper(submission.Title), "SSD") {
 			continue
 		}
 		if !config.OverrideOldBot {
@@ -98,7 +98,7 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 			continue
 		}
 		found := ssdList[0]
-		// err = rc.SubmitComment(submission.ID, found.ToMarkdown())
+		err = rc.SubmitComment(submission.ID, found.ToMarkdown())
 		if err != nil {
 			return err
 		}
