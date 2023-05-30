@@ -35,12 +35,17 @@ func main() {
 	rc, err := reddit.NewRedditClient(config.ClientId, config.ClientSecret, config.Username, config.Password, config.Token, config.ExpireTimeMilli, config.OverrideOldBot, config.IsDebug)
 	if err != nil {
 		log.Fatal().Msgf("Init reddit client error: %v", err)
-		log.Info().Msgf("Init reddit client error: %v", rc)
 	}
 	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
 	esRepo := ssd.NewEsSSDRepository(es, "ssd-index")
 	// doTest(esRepo)
-	run(context.Background(), config, rc, esRepo)
+	for {
+		err = run(context.Background(), config, rc, esRepo)
+		if err != nil {
+			log.Error().Msgf("Error during run: %v", err)
+		}
+		time.Sleep(15 * time.Minute)
+	}
 }
 
 func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ssd.EsSSDRepository) error {
