@@ -39,8 +39,9 @@ func main() {
 	}
 	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
 	esRepo := ssd.NewEsSSDRepository(es, "ssd-index")
-	// doTest(esRepo)
-	run(context.Background(), config, rc, esRepo)
+	doTest(esRepo)
+	//	run(context.Background(), config, rc, esRepo)
+	//
 	// tpuRepo := ssd.NewTpuSSDRepository(config.TPUHost, config.TPUUsername, config.TPUSecret)
 	// sync(tpuRepo, esRepo)
 }
