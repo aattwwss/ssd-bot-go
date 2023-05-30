@@ -118,3 +118,13 @@ func (rc RedditClient) SubmitComment(postId, text string) error {
 	defer resp.Body.Close()
 	return nil
 }
+
+func (rc RedditClient) IsCommentedByUser(submissionId string, author string) bool {
+	comments, _ := rc.GetCommentsBySubmissionId(submissionId, 100)
+	for _, comment := range comments {
+		if comment.Author == author {
+			return true
+		}
+	}
+	return false
+}

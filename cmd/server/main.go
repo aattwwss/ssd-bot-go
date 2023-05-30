@@ -39,11 +39,8 @@ func main() {
 	}
 	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
 	esRepo := ssd.NewEsSSDRepository(es, "ssd-index")
-	doTest(esRepo)
-	//	run(context.Background(), config, rc, esRepo)
-	//
-	// tpuRepo := ssd.NewTpuSSDRepository(config.TPUHost, config.TPUUsername, config.TPUSecret)
-	// sync(tpuRepo, esRepo)
+	// doTest(esRepo)
+	run(context.Background(), config, rc, esRepo)
 }
 
 func sync(source, dest ssd.SSDRepository) {
@@ -80,14 +77,12 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 		if !strings.Contains(strings.ToUpper(submission.LinkFlairText), "SSD") {
 			continue
 		}
-		var botCommented bool
-		comments, _ := rc.GetCommentsBySubmissionId(submission.ID, 100)
-		for _, comment := range comments {
-			botCommented = comment.Author == "SSDBot"
-		}
-		if config.OverrideOldBot && botCommented {
-			log.Info().Msgf("Another bot already commented on this submission: %s", submission.Title)
-			continue
+		if config.OverrideOldBot {
+			botCommented := rc.IsCommentedByUser(submission.ID, "SSDBot")
+			if botCommented {
+				log.Info().Msgf("Another bot already commented on this submission: %s", submission.Title)
+				continue
+			}
 		}
 
 		_, ok := botCommentsMap[submission.ID]
@@ -107,7 +102,7 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 			continue
 		}
 		found := ssdList[0]
-		err = rc.SubmitComment(submission.ID, found.ToMarkdown())
+		// err = rc.SubmitComment(submission.ID, found.ToMarkdown())
 		if err != nil {
 			return err
 		}
@@ -118,6 +113,7 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 
 	return nil
 }
+
 func cleanTitle(s string) string {
 	s = strings.ToLower(s)
 	s = regexp.MustCompile(`\[[^\]]+\]`).ReplaceAllString(s, "")
@@ -199,30 +195,4 @@ func doTest(esRepo *ssd.EsSSDRepository) {
 		writer.Write(record)
 		writer.Flush()
 	}
-
-	// for {
-	// 	// Read a line from the input CSV file
-	// 	if err != nil {
-	// 		break // End of file
-	// 	}
-	//
-	// 	// Process the line (example: convert to uppercase)
-	//
-	// 	// Write the processed line to the output CSV file
-	// 	err = writer.Write(line)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	//
-	// 	// Flush the writer to ensure the line is written immediately
-	// 	writer.Flush()
-	//
-	// 	// Check for any writer error
-	// 	if err := writer.Error(); err != nil {
-	// 		panic(err)
-	// 	}
-	//
-	// 	// Print the processed line
-	// 	fmt.Println(line)
-	// }
 }
