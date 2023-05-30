@@ -40,10 +40,12 @@ func main() {
 	esRepo := ssd.NewEsSSDRepository(es, "ssd-index")
 	// doTest(esRepo)
 	for {
+		log.Info().Msg("Start searching...")
 		err = run(context.Background(), config, rc, esRepo)
 		if err != nil {
 			log.Error().Msgf("Error during run: %v", err)
 		}
+		log.Info().Msg("End searching...")
 		time.Sleep(15 * time.Minute)
 	}
 }
@@ -69,11 +71,12 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 		if !strings.Contains(strings.ToUpper(submission.LinkFlairText), "SSD") {
 			continue
 		}
-		if config.OverrideOldBot {
+		if !config.OverrideOldBot {
 			// do not comment if another bot already commented
-			botCommented := rc.IsCommentedByUser(submission.ID, "SSDBot")
+			botToCheck := "SSDBot"
+			botCommented := rc.IsCommentedByUser(submission.ID, botToCheck)
 			if botCommented {
-				log.Info().Msgf("Another bot already commented on this submission: %s", submission.Title)
+				log.Info().Msgf("%s already commented on this submission: %s", botToCheck, submission.Title)
 				continue
 			}
 		}
