@@ -56,36 +56,19 @@ type BasicSSD struct {
 	FormFactor   string `json:"formFactor"`
 }
 
-// type SSD struct {
-// 	Brand    string
-// 	Model    string
-// 	NandType string
-// 	Category string
-//
-// 	Interface string
-//
-// 	FormFactor string
-//
-// 	Controller string
-//
-// 	Configuration string
-//
-// 	DRAM string //yes/no
-//
-// 	HMB string //yes/no
-//
-// 	NandBrand string
-//
-// 	NandDimension string //2D or 3D
-//
-// 	Layers string
-//
-// 	ReadWrite string
-//
-// 	CellRow int
-//
-// 	Capacity string //not used
-// }
+func (ssd SSD) getHMB() string {
+	if ssd.Hmb == "Unknown" {
+		return "N/A"
+	}
+	return ssd.Hmb
+}
+
+func (ssd SSD) getDram() string {
+	if ssd.Dram == "Unknown" {
+		return "N/A"
+	}
+	return ssd.Dram
+}
 
 func (ssd SSD) ToMarkdown() string {
 
@@ -101,12 +84,12 @@ func (ssd SSD) ToMarkdown() string {
 		fmt.Sprintf("* Interface: **%s**", ssd.Interface),
 		fmt.Sprintf("* Form Factor: **%s**", ssd.FormFactor),
 		fmt.Sprintf("* Controller: **%s %s**", ssd.Controller.Manufacturer, ssd.Controller.Name),
-		fmt.Sprintf("* DRAM: **%s**", ssd.Dram),
-		fmt.Sprintf("* HMB: **%s**", ssd.Hmb),
+		fmt.Sprintf("* DRAM: **%s**", ssd.getDram()),
+		fmt.Sprintf("* HMB: **%s**", ssd.getHMB()),
 		fmt.Sprintf("* NAND Brand: **%s**", ssd.Flash.Manufacturer),
 		fmt.Sprintf("* NAND Type: **%s**", ssd.Flash.Type),
-		// fmt.Sprintf("* 2D/3D NAND: **%s**", ssd.NandDimension),
 		fmt.Sprintf("* R/W: **%s - %s**", ssd.SeqRead, ssd.SeqWrite),
+		fmt.Sprintf("* Endurance: **%s**", ssd.Endurance),
 		fmt.Sprintf("* Price History: **[camelcamelcamel](https://camelcamelcamel.com/search?sq=%s)**", ssd.Manufacturer+" "+ssd.Name),
 		fmt.Sprintf("* Detailed Link: **[TechPowerUp](%s)**", ssd.URL),
 		fmt.Sprintf("---\n%s", ref),
