@@ -1,0 +1,139 @@
+{
+  "mappings": {
+    "properties": {
+      "capacity": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        },
+        "analyzer": "whitespace_lowercase_analyzer"
+      },
+      "controller": {
+        "properties": {
+          "channels": {
+            "type": "keyword"
+          },
+          "mfgr": {
+            "type": "keyword"
+          },
+          "name": {
+            "type": "keyword"
+          },
+          "nameShort": {
+            "type": "keyword"
+          }
+        }
+      },
+      "dram": {
+        "type": "keyword"
+      },
+      "driveId": {
+        "type": "keyword"
+      },
+      "endurance": {
+        "type": "keyword"
+      },
+      "flash": {
+        "properties": {
+          "layers": {
+            "type": "keyword"
+          },
+          "mfgr": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            },
+            "analyzer": "standard"
+          },
+          "name": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            },
+            "analyzer": "standard"
+          },
+          "type": {
+            "type": "keyword"
+          }
+        }
+      },
+      "formFactor": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        },
+        "analyzer": "whitespace_lowercase_analyzer"
+      },
+      "hmb": {
+        "type": "keyword"
+      },
+      "interface": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        },
+        "analyzer": "standard"
+      },
+      "mfgr": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        },
+        "analyzer": "standard"
+      },
+      "name": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        },
+        "analyzer": "standard"
+      },
+      "protocol": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        },
+        "analyzer": "standard"
+      },
+      "released": {
+        "type": "keyword"
+      },
+      "seqRead": {
+        "type": "keyword"
+      },
+      "seqWrite": {
+        "type": "keyword"
+      },
+      "url": {
+        "type": "keyword"
+      },
+      "warranty": {
+        "type": "keyword"
+      }
+    }
+  }
+}
