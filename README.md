@@ -20,3 +20,5 @@ cp .env.example .env
 docker build --tag ssd-bot-go .
 docker compose up -d
 ```
+# Acknowledgement
+Thanks [TechPowerup](https://www.techpowerup.com/ssd-specs/) for providing me their api access to their SSD database!
