@@ -41,7 +41,7 @@ func main() {
 func sync(source, dest ssd.SSDRepository) {
 	ssdSync := ssd.SSDSync{
 		StartId:  1,
-		EndId:    1520,
+		EndId:    1550,
 		Delay:    time.Duration(10),
 		IdToSkip: []int{},
 	}
