@@ -124,6 +124,7 @@ func (rc *RedditClient) RefreshToken() error {
 }
 
 func (rc *RedditClient) newRequest(method string, url string, body io.Reader) (*http.Request, error) {
+	rc.RefreshToken()
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
