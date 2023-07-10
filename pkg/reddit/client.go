@@ -70,7 +70,6 @@ func (rc *RedditClient) RefreshToken() error {
 	now := time.Now()
 	durationFromExpire := time.UnixMilli(rc.tokenExpireTimeMilli).Sub(now).Minutes()
 	if durationFromExpire > 30 {
-		log.Info().Msgf("Token is still valid for %v minutes. Refresh only with 30 minutes left.", int(durationFromExpire))
 		return nil
 	}
 	// Set the form data
