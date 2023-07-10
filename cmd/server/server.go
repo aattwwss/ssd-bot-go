@@ -68,7 +68,7 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 	}
 
 	for _, submission := range newSubmissions {
-		if !strings.Contains(strings.ToUpper(submission.Title), "SSD") {
+		if !strings.Contains(strings.ToUpper(submission.LinkFlairText), "SSD") {
 			continue
 		}
 		if !config.OverrideOldBot {

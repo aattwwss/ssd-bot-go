@@ -3,6 +3,7 @@ package ssd
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 )
 
@@ -73,8 +74,8 @@ func (ssd SSD) getDram() string {
 func (ssd SSD) ToMarkdown() string {
 
 	ref := fmt.Sprintf(
-		"[^(Data Sheet)](%s) ^| [^( Github)](%s) ^| [^(Issues)](%s)",
-		"https://docs.google.com/spreadsheets/d/1B27_j9NDPU3cNlj2HKcrfpJKHkOf-Oi1DbuuQva2gT4/edit#gid=0",
+		"[^(TechPowerup Database)](%s) ^| [^( Github)](%s) ^| [^(Issues)](%s)",
+		"https://www.techpowerup.com/ssd-specs",
 		"https://github.com/aattwwss/ssd-bot-go",
 		"https://github.com/aattwwss/ssd-bot-go/issues",
 	)
@@ -90,7 +91,7 @@ func (ssd SSD) ToMarkdown() string {
 		fmt.Sprintf("* NAND Type: **%s**", ssd.Flash.Type),
 		fmt.Sprintf("* R/W: **%s - %s**", ssd.SeqRead, ssd.SeqWrite),
 		fmt.Sprintf("* Endurance: **%s**", ssd.Endurance),
-		fmt.Sprintf("* Price History: **[camelcamelcamel](https://camelcamelcamel.com/search?sq=%s)**", ssd.Manufacturer+" "+ssd.Name),
+		fmt.Sprintf("* Price History: **[camelcamelcamel](https://camelcamelcamel.com/search?sq=%s)**", url.QueryEscape(ssd.Manufacturer+" "+ssd.Name)),
 		fmt.Sprintf("* Detailed Link: **[TechPowerUp](%s)**", ssd.URL),
 		fmt.Sprintf("---\n%s", ref),
 	}
