@@ -70,7 +70,6 @@ func (rc *RedditClient) RefreshToken() error {
 	now := time.Now()
 	durationFromExpire := time.UnixMilli(rc.tokenExpireTimeMilli).Sub(now).Minutes()
 	if durationFromExpire > 30 {
-		log.Info().Msgf("Token is still valid for %v minutes. Refresh only with 30 minutes left.", int(durationFromExpire))
 		return nil
 	}
 	// Set the form data
@@ -124,6 +123,7 @@ func (rc *RedditClient) RefreshToken() error {
 }
 
 func (rc *RedditClient) newRequest(method string, url string, body io.Reader) (*http.Request, error) {
+	rc.RefreshToken()
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
