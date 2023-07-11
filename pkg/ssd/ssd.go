@@ -92,14 +92,12 @@ func (ssd SSD) ToMarkdown() string {
 		fmt.Sprintf("* R/W: **%s - %s**", ssd.SeqRead, ssd.SeqWrite),
 		fmt.Sprintf("* Endurance: **%s**", ssd.Endurance),
 		fmt.Sprintf("* Price History: **[camelcamelcamel](https://camelcamelcamel.com/search?sq=%s)**", url.QueryEscape(ssd.Manufacturer+" "+ssd.Name)),
-		fmt.Sprintf("* Detailed Link: **[TechPowerUp](%s)**", ssd.URL),
+		fmt.Sprintf("* Detailed Link: **[TechPowerUp](https://www.techpowerup.com/ssd-specs/#%s)**", url.QueryEscape(filterName(ssd.Name))),
 		fmt.Sprintf("---\n%s", ref),
 	}
 	return strings.Join(arr, "\n\n")
 }
 
-func main() {
-
-	ssd := SSD{}
-	fmt.Println(ssd.ToMarkdown())
+func filterName(s string) string {
+	return strings.ReplaceAll(s, "/", "")
 }
