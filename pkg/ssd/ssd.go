@@ -90,7 +90,7 @@ func (ssd SSD) ToMarkdown() string {
 		fmt.Sprintf("* NAND Brand: **%s**", ssd.Flash.Manufacturer),
 		fmt.Sprintf("* NAND Type: **%s**", ssd.Flash.Type),
 		fmt.Sprintf("* R/W: **%s - %s**", ssd.SeqRead, ssd.SeqWrite),
-		fmt.Sprintf("* Endurance: **%s**", ssd.Endurance),
+		// fmt.Sprintf("* Endurance: **%s**", ssd.Endurance),
 		fmt.Sprintf("* Price History: **[camelcamelcamel](https://camelcamelcamel.com/search?sq=%s)**", url.QueryEscape(ssd.Manufacturer+" "+ssd.Name)),
 		fmt.Sprintf("* Detailed Link: **[TechPowerUp](https://www.techpowerup.com/ssd-specs/#%s)**", url.QueryEscape(filterName(ssd.Name))),
 		fmt.Sprintf("---\n%s", ref),
