@@ -59,7 +59,7 @@ type BasicSSD struct {
 
 func (ssd SSD) getHMB() string {
 	if ssd.Hmb == "Unknown" || ssd.Hmb == "N/A" {
-		return "N/A"
+		return "No"
 	}
 	// return ssd.Hmb
 	return "Yes"
@@ -67,7 +67,7 @@ func (ssd SSD) getHMB() string {
 
 func (ssd SSD) getDram() string {
 	if ssd.Dram == "Unknown" || ssd.Dram == "N/A" {
-		return "N/A"
+		return "No"
 	}
 	// return ssd.Dram
 	return "Yes"
