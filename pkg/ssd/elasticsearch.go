@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/aattwwss/ssd-bot-go/elasticutil"
@@ -184,4 +186,19 @@ func (esRepo *EsSSDRepository) doSearch(ctx context.Context, query map[string]in
 		return errors.New("search payload decode error")
 	}
 	return nil
+}
+
+func parseCapacity(s string) (int, bool) {
+	s = strings.ToUpper(s)
+	re := regexp.MustCompile(`(\d+)\s*(TB|GB)`)
+	match := re.FindStringSubmatch(s)
+	if len(match) > 1 {
+		capacity, err := strconv.Atoi(match[1])
+		if err != nil {
+			return 0, false
+		}
+		return capacity, true
+	} else {
+		return 0, false
+	}
 }
