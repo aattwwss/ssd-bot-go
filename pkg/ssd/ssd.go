@@ -66,7 +66,7 @@ func (ssd SSD) getHMB() string {
 }
 
 func (ssd SSD) getDram() string {
-	if ssd.Dram == "Unknown" || ssd.Hmb == "N/A" {
+	if ssd.Dram == "Unknown" || ssd.Dram == "N/A" {
 		return "N/A"
 	}
 	// return ssd.Dram
