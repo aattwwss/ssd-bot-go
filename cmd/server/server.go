@@ -51,7 +51,7 @@ func main() {
 }
 
 func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ssd.EsSSDRepository) error {
-	newSubmissions, err := rc.GetNewSubmissions(config.Subreddit, 250)
+	newSubmissions, err := rc.GetNewSubmissions(config.Subreddit, 25)
 	if err != nil {
 		return err
 	}
