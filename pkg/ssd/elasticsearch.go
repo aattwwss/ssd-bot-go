@@ -224,13 +224,12 @@ func parseCapacity(s string) (int, bool) {
 	s = strings.ToUpper(s)
 	re := regexp.MustCompile(`(\d+)\s*(TB|GB)`)
 	match := re.FindStringSubmatch(s)
-	if len(match) > 1 {
-		capacity, err := strconv.Atoi(match[1])
-		if err != nil {
-			return 0, false
-		}
-		return capacity, true
-	} else {
+	if len(match) <= 1 {
 		return 0, false
 	}
+	capacity, err := strconv.Atoi(match[1])
+	if err != nil {
+		return 0, false
+	}
+	return capacity, true
 }
