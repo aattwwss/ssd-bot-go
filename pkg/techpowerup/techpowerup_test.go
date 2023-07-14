@@ -1,4 +1,4 @@
-package ssd
+package techpowerup
 
 import (
 	"fmt"

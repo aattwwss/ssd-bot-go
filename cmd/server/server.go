@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
+	"github.com/aattwwss/ssd-bot-go/internal/config"
+	"github.com/aattwwss/ssd-bot-go/pkg/elasticsearch"
 	"os"
 	"regexp"
 	"strings"
@@ -11,7 +13,6 @@ import (
 
 	"github.com/aattwwss/ssd-bot-go/elasticutil"
 	"github.com/aattwwss/ssd-bot-go/pkg/reddit"
-	"github.com/aattwwss/ssd-bot-go/pkg/ssd"
 	"github.com/caarlos0/env/v8"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
@@ -27,21 +28,21 @@ func main() {
 		log.Fatal().Msg("Error loading .env file")
 	}
 
-	config := config{}
-	if err := env.Parse(&config); err != nil {
+	cfg := config.Config{}
+	if err := env.Parse(&cfg); err != nil {
 		log.Fatal().Msgf("Parse env error: %v", err)
 	}
 
-	rc, err := reddit.NewRedditClient(config.ClientId, config.ClientSecret, config.Username, config.Password, config.Token, config.ExpireTimeMilli, config.OverrideOldBot, config.IsDebug)
+	rc, err := reddit.NewRedditClient(cfg.ClientId, cfg.ClientSecret, cfg.Username, cfg.Password, cfg.Token, cfg.ExpireTimeMilli, cfg.OverrideOldBot, cfg.IsDebug)
 	if err != nil {
 		log.Fatal().Msgf("Init reddit client error: %v", err)
 	}
-	es, _ := elasticutil.NewElasticsearchClient(config.EsAddress)
-	esRepo := ssd.NewEsSSDRepository(es, "ssd-index")
+	es, _ := elasticutil.NewElasticsearchClient(cfg.EsAddress)
+	esRepo := elasticsearch.NewEsSSDRepository(es, "ssd-index")
 	// doTest(esRepo)
 	for {
 		log.Info().Msg("Start searching...")
-		err = run(context.Background(), config, rc, esRepo)
+		err = run(context.Background(), cfg, rc, esRepo)
 		if err != nil {
 			log.Error().Msgf("Error during run: %v", err)
 		}
@@ -50,8 +51,8 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ssd.EsSSDRepository) error {
-	newSubmissions, err := rc.GetNewSubmissions(config.Subreddit, 25)
+func run(ctx context.Context, cfg config.Config, rc *reddit.RedditClient, esRepo *elasticsearch.EsSSDRepository) error {
+	newSubmissions, err := rc.GetNewSubmissions(cfg.Subreddit, 25)
 	if err != nil {
 		return err
 	}
@@ -71,7 +72,7 @@ func run(ctx context.Context, config config, rc *reddit.RedditClient, esRepo *ss
 		if !strings.Contains(strings.ToUpper(submission.LinkFlairText), "SSD") {
 			continue
 		}
-		if !config.OverrideOldBot {
+		if !cfg.OverrideOldBot {
 			// do not comment if another bot already commented
 			botToCheck := "SSDBot"
 			botCommented := rc.IsCommentedByUser(submission.ID, botToCheck)
@@ -129,32 +130,7 @@ func cleanTitle(s string) string {
 	return s
 }
 
-type config struct {
-	// reddit config
-	ClientId     string `env:"CLIENT_ID,notEmpty"`
-	ClientSecret string `env:"CLIENT_SECRET,notEmpty"`
-	Username     string `env:"BOT_USERNAME,notEmpty"`
-	Password     string `env:"BOT_PASSWORD,notEmpty"`
-	Subreddit    string `env:"SUBREDDIT,notEmpty"`
-
-	// techpowerup config
-	TPUHost     string `env:"TPU_HOST,notEmpty"`
-	TPUUsername string `env:"TPU_USERNAME,notEmpty"`
-	TPUSecret   string `env:"TPU_SECRET,notEmpty"`
-
-	// elasticsearch config
-	EsAddress string `env:"ES_ADDRESS,notEmpty"`
-
-	// application config
-	OverrideOldBot bool `env:"OVERRIDE_OLD_BOT,notEmpty"`
-
-	//debugging config
-	Token           string `env:"BOT_ACCESS_TOKEN"`
-	ExpireTimeMilli int64  `env:"BOT_TOKEN_EXPIRE_MILLI"`
-	IsDebug         bool   `env:"IS_DEBUG"`
-}
-
-func doTest(esRepo *ssd.EsSSDRepository) {
+func doTest(esRepo *elasticsearch.EsSSDRepository) {
 	// Open the input CSV file for reading
 	inputFile, err := os.Open("test/input.csv")
 	if err != nil {

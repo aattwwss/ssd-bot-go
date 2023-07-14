@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-type SSDRepository interface {
+type Repository interface {
 	FindById(ctx context.Context, id string) (*SSD, error)
 	Insert(ctx context.Context, ssd SSD) error
 	Update(ctx context.Context, ssd SSD) error
-	SearchBasic(ctx context.Context, s string) ([]BasicSSD, error)
+	SearchBasic(ctx context.Context, s string) ([]SSDBasic, error)
 	Search(ctx context.Context, s string) ([]SSD, error)
 }
 
@@ -49,7 +49,7 @@ type Flash struct {
 	Layers       string `json:"layers"`
 }
 
-type BasicSSD struct {
+type SSDBasic struct {
 	DriveID      string `json:"driveId"`
 	Manufacturer string `json:"mfgr"`
 	Name         string `json:"name"`
@@ -57,22 +57,22 @@ type BasicSSD struct {
 	FormFactor   string `json:"formFactor"`
 }
 
-func (ssd SSD) getHMB() string {
-	if ssd.Hmb == "Unknown" || ssd.Hmb == "N/A" {
-		return "No"
+func (ssd SSD) getHMBSize() string {
+	if ssd.Hmb == "Unknown" {
+		return "N/A"
 	}
 	return ssd.Hmb
-	// return "Yes"
 }
 
-func (ssd SSD) getDram() string {
-	if ssd.Dram == "Unknown" || ssd.Dram == "N/A" {
-		return "No"
+func (ssd SSD) getDramSize() string {
+	if ssd.Dram == "Unknown" {
+		return "N/A"
 	}
 	return ssd.Dram
-	//return "Yes"
 }
 
+// ToMarkdown converts SSD to Markdown format to support
+// formatting in a reddit comment submission
 func (ssd SSD) ToMarkdown() string {
 
 	ref := fmt.Sprintf(
@@ -87,19 +87,15 @@ func (ssd SSD) ToMarkdown() string {
 		fmt.Sprintf("* Interface: **%s**", ssd.Interface),
 		fmt.Sprintf("* Form Factor: **%s**", ssd.FormFactor),
 		fmt.Sprintf("* Controller: **%s %s**", ssd.Controller.Manufacturer, ssd.Controller.Name),
-		fmt.Sprintf("* DRAM: **%s**", ssd.getDram()),
-		fmt.Sprintf("* HMB: **%s**", ssd.getHMB()),
+		fmt.Sprintf("* DRAM: **%s**", ssd.getDramSize()),
+		fmt.Sprintf("* HMB: **%s**", ssd.getHMBSize()),
 		fmt.Sprintf("* NAND Brand: **%s**", ssd.Flash.Manufacturer),
 		fmt.Sprintf("* NAND Type: **%s**", ssd.Flash.Type),
 		fmt.Sprintf("* R/W: **%s - %s**", ssd.SeqRead, ssd.SeqWrite),
 		fmt.Sprintf("* Endurance: **%s**", ssd.Endurance),
 		fmt.Sprintf("* Price History: **[camelcamelcamel](https://camelcamelcamel.com/search?sq=%s)**", url.QueryEscape(ssd.Manufacturer+" "+ssd.Name)),
-		fmt.Sprintf("* Detailed Link: **[TechPowerUp SSD Database](https://www.techpowerup.com/ssd-specs/#%s)**", url.QueryEscape(filterName(ssd.Name))),
+		fmt.Sprintf("* Detailed Link: **[TechPowerUp SSD Database](%s)**", ssd.URL),
 		fmt.Sprintf("---\n%s", ref),
 	}
 	return strings.Join(arr, "\n\n")
-}
-
-func filterName(s string) string {
-	return strings.ReplaceAll(s, "/", "")
 }

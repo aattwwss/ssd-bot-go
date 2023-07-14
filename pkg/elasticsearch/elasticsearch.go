@@ -1,10 +1,11 @@
-package ssd
+package elasticsearch
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/aattwwss/ssd-bot-go/pkg/ssd"
 	"regexp"
 	"strconv"
 	"strings"
@@ -27,8 +28,8 @@ func NewEsSSDRepository(esClient *elasticsearch.Client, index string) *EsSSDRepo
 	}
 }
 
-func (esRepo *EsSSDRepository) FindById(ctx context.Context, driveId string) (*SSD, error) {
-	var ssdResponse elasticutil.SearchResponse[SSD]
+func (esRepo *EsSSDRepository) FindById(ctx context.Context, driveId string) (*ssd.SSD, error) {
+	var ssdResponse elasticutil.SearchResponse[ssd.SSD]
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"term": map[string]interface{}{
@@ -46,10 +47,9 @@ func (esRepo *EsSSDRepository) FindById(ctx context.Context, driveId string) (*S
 	return &ssdResponse.Hits.Hits[0].Source, nil
 }
 
-func (esRepo *EsSSDRepository) SearchBasic(ctx context.Context, s string) ([]BasicSSD, error) {
-	//TODO implement this
-	var ssdResponse elasticutil.SearchResponse[BasicSSD]
-	var res []BasicSSD
+func (esRepo *EsSSDRepository) SearchBasic(ctx context.Context, s string) ([]ssd.SSDBasic, error) {
+	var ssdResponse elasticutil.SearchResponse[ssd.SSDBasic]
+	var res []ssd.SSDBasic
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"multi_match": map[string]interface{}{
@@ -81,22 +81,23 @@ type BoolQueryParams struct {
 	MinimumShouldMatch int           `json:"minimum_should_match,omitempty"`
 }
 
-func (esRepo *EsSSDRepository) Search(ctx context.Context, searchQuery string) ([]SSD, error) {
-	//TODO implement this
-	var ssdResponse elasticutil.SearchResponse[SSD]
-	var res []SSD
+func (esRepo *EsSSDRepository) Search(ctx context.Context, searchQuery string) ([]ssd.SSD, error) {
+	var ssdResponse elasticutil.SearchResponse[ssd.SSD]
+	var res []ssd.SSD
 
 	boolQuery := BoolQuery{
 		Bool: BoolQueryParams{
 			Must: []interface{}{},
 		},
 	}
+
 	matchQuery := map[string]interface{}{
 		"multi_match": map[string]interface{}{
 			"query": searchQuery,
 		},
 	}
 	boolQuery.Bool.Must = append(boolQuery.Bool.Must, matchQuery)
+
 	capacity, ok := parseCapacity(searchQuery)
 	if ok {
 		capacityQuery := map[string]interface{}{
@@ -124,32 +125,26 @@ func (esRepo *EsSSDRepository) Search(ctx context.Context, searchQuery string) (
 	return res, nil
 }
 
-// a sanityCheck to ensure we only return the ssd we know is correct
-// remove false positive as much as possible
-func sanityCheck(searchQuery string, ssd SSD) bool {
+// rules to ensure no false positives
+// 1. Manufacturer must be in the search query
+// 2. Name must be in the search query (without the heatsink part)
+func sanityCheck(searchQuery string, ssd ssd.SSD) bool {
 	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssd.Manufacturer, " ", ""))) {
 		return false
 	}
-	cleanedName := cleanName(ssd.Name)
-	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(cleanedName, " ", ""))) {
+	ssdName := strings.ReplaceAll(ssd.Name, "(w/ Heatsink)", "")
+	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssdName, " ", ""))) {
 		return false
 	}
 	return true
 }
 
-// cleanName will remove any redundant characters so that the sanity check can
-// be more accurate. Ideally we would want to do this in our persistence layer,
-// but I'm lazy
-func cleanName(name string) string {
-	return strings.ReplaceAll(name, "(w/ Heatsink)", "")
-}
-
-func (esRepo *EsSSDRepository) Update(ctx context.Context, ssd SSD) error {
+func (esRepo *EsSSDRepository) Update(ctx context.Context, ssd ssd.SSD) error {
 	//TODO implement this
 	return nil
 }
 
-func (esRepo *EsSSDRepository) Insert(ctx context.Context, ssd SSD) error {
+func (esRepo *EsSSDRepository) Insert(ctx context.Context, ssd ssd.SSD) error {
 	// Build the request body.
 	data, err := json.Marshal(ssd)
 	if err != nil {
@@ -180,6 +175,7 @@ func (esRepo *EsSSDRepository) Insert(ctx context.Context, ssd SSD) error {
 	return nil
 }
 
+// wrapper for search queries to Elastic client
 func (esRepo *EsSSDRepository) doSearch(ctx context.Context, query map[string]interface{}, payload any) error {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
@@ -220,6 +216,7 @@ func (esRepo *EsSSDRepository) doSearch(ctx context.Context, query map[string]in
 	return nil
 }
 
+// parseCapacity parses a string for a capacity in TB or GB
 func parseCapacity(s string) (int, bool) {
 	s = strings.ToUpper(s)
 	re := regexp.MustCompile(`(\d+)\s*(TB|GB)`)
