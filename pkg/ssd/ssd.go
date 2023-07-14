@@ -61,16 +61,16 @@ func (ssd SSD) getHMB() string {
 	if ssd.Hmb == "Unknown" || ssd.Hmb == "N/A" {
 		return "No"
 	}
-	// return ssd.Hmb
-	return "Yes"
+	return ssd.Hmb
+	// return "Yes"
 }
 
 func (ssd SSD) getDram() string {
 	if ssd.Dram == "Unknown" || ssd.Dram == "N/A" {
 		return "No"
 	}
-	// return ssd.Dram
-	return "Yes"
+	return ssd.Dram
+	//return "Yes"
 }
 
 func (ssd SSD) ToMarkdown() string {
@@ -83,7 +83,7 @@ func (ssd SSD) ToMarkdown() string {
 	)
 
 	arr := []string{
-		fmt.Sprintf("The %s %s is a *%s* SSD.", ssd.Manufacturer, ssd.Name, ssd.Flash.Type),
+		fmt.Sprintf("The %s %s %s is a *%s* SSD.", ssd.Manufacturer, ssd.Name, ssd.Capacity, ssd.Flash.Type),
 		fmt.Sprintf("* Interface: **%s**", ssd.Interface),
 		fmt.Sprintf("* Form Factor: **%s**", ssd.FormFactor),
 		fmt.Sprintf("* Controller: **%s %s**", ssd.Controller.Manufacturer, ssd.Controller.Name),
@@ -92,7 +92,7 @@ func (ssd SSD) ToMarkdown() string {
 		fmt.Sprintf("* NAND Brand: **%s**", ssd.Flash.Manufacturer),
 		fmt.Sprintf("* NAND Type: **%s**", ssd.Flash.Type),
 		fmt.Sprintf("* R/W: **%s - %s**", ssd.SeqRead, ssd.SeqWrite),
-		// fmt.Sprintf("* Endurance: **%s**", ssd.Endurance),
+		fmt.Sprintf("* Endurance: **%s**", ssd.Endurance),
 		fmt.Sprintf("* Price History: **[camelcamelcamel](https://camelcamelcamel.com/search?sq=%s)**", url.QueryEscape(ssd.Manufacturer+" "+ssd.Name)),
 		fmt.Sprintf("* Detailed Link: **[TechPowerUp SSD Database](https://www.techpowerup.com/ssd-specs/#%s)**", url.QueryEscape(filterName(ssd.Name))),
 		fmt.Sprintf("---\n%s", ref),

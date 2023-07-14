@@ -68,17 +68,49 @@ func (esRepo *EsSSDRepository) SearchBasic(ctx context.Context, s string) ([]Bas
 	return res, nil
 }
 
+// BoolQuery Elastic bool query
+type BoolQuery struct {
+	Bool BoolQueryParams `json:"bool"`
+}
+
+// BoolQueryParams params for an Elastic bool query
+type BoolQueryParams struct {
+	Must               []interface{} `json:"must,omitempty"`
+	Should             []interface{} `json:"should,omitempty"`
+	Filter             []interface{} `json:"filter,omitempty"`
+	MinimumShouldMatch int           `json:"minimum_should_match,omitempty"`
+}
+
 func (esRepo *EsSSDRepository) Search(ctx context.Context, searchQuery string) ([]SSD, error) {
 	//TODO implement this
 	var ssdResponse elasticutil.SearchResponse[SSD]
 	var res []SSD
-	query := map[string]interface{}{
-		"query": map[string]interface{}{
-			"multi_match": map[string]interface{}{
-				"query": searchQuery,
-			},
+
+	boolQuery := BoolQuery{
+		Bool: BoolQueryParams{
+			Must: []interface{}{},
 		},
 	}
+	matchQuery := map[string]interface{}{
+		"multi_match": map[string]interface{}{
+			"query": searchQuery,
+		},
+	}
+	boolQuery.Bool.Must = append(boolQuery.Bool.Must, matchQuery)
+	capacity, ok := parseCapacity(searchQuery)
+	if ok {
+		capacityQuery := map[string]interface{}{
+			"term": map[string]interface{}{
+				"capacity": capacity,
+			},
+		}
+		boolQuery.Bool.Must = append(boolQuery.Bool.Must, capacityQuery)
+	}
+
+	query := map[string]interface{}{
+		"query": boolQuery,
+	}
+
 	err := esRepo.doSearch(ctx, query, &ssdResponse)
 	if err != nil {
 		return nil, err
