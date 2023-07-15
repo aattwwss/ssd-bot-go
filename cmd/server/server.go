@@ -41,17 +41,16 @@ func main() {
 	esRepo := ssd.NewEsRepository(es, "ssd-index")
 	// doTest(esRepo)
 	for {
-		log.Info().Msg("Start searching...")
 		err = run(context.Background(), cfg, rc, esRepo)
 		if err != nil {
 			log.Error().Msgf("Error during run: %v", err)
 		}
-		log.Info().Msg("End searching...")
 		time.Sleep(15 * time.Minute)
 	}
 }
 
 func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.EsRepository) error {
+	log.Info().Msg("Start searching...")
 	newSubmissions, err := rc.GetNewSubmissions(cfg.Subreddit, 25)
 	if err != nil {
 		return err
@@ -107,7 +106,7 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 		//rate limit submission of post to prevent getting rejected
 		time.Sleep(1 * time.Second)
 	}
-
+	log.Info().Msg("End searching...")
 	return nil
 }
 
