@@ -18,9 +18,9 @@ type Submission struct {
 	LinkFlairText string `json:"link_flair_text"`
 }
 
-func (rc RedditClient) GetNewSubmissions(subreddit string, limit int) ([]Submission, error) {
-	url := fmt.Sprintf("https://oauth.reddit.com/r/%s/new?limit=%v", subreddit, limit)
-	req, err := rc.newRequest("GET", url, nil)
+func (rc *RedditClient) GetNewSubmissions(subreddit string, limit int) ([]Submission, error) {
+	redditUrl := fmt.Sprintf("https://oauth.reddit.com/r/%s/new?limit=%v", subreddit, limit)
+	req, err := rc.newRequest("GET", redditUrl, nil)
 	if err != nil {
 		log.Error().Msgf("Error creating request: %v", err)
 		return nil, err
@@ -61,10 +61,9 @@ type SubmissionComment struct {
 	IsSubmitter    bool   `json:"is_submitter"`
 }
 
-func (rc RedditClient) GetCommentsBySubmissionId(submissionId string, limit int) ([]SubmissionComment, error) {
-
-	url := fmt.Sprintf("https://oauth.reddit.com/comments/%s?limit=%v&depth=1", submissionId, limit)
-	req, err := rc.newRequest("GET", url, nil)
+func (rc *RedditClient) GetCommentsBySubmissionId(submissionId string, limit int) ([]SubmissionComment, error) {
+	redditUrl := fmt.Sprintf("https://oauth.reddit.com/comments/%s?limit=%v&depth=1", submissionId, limit)
+	req, err := rc.newRequest("GET", redditUrl, nil)
 	if err != nil {
 		log.Error().Msgf("Error creating request: %v", err)
 		return nil, err
@@ -94,7 +93,7 @@ func (rc RedditClient) GetCommentsBySubmissionId(submissionId string, limit int)
 	return submissionComments, nil
 }
 
-func (rc RedditClient) SubmitComment(postId, text string) error {
+func (rc *RedditClient) SubmitComment(postId, text string) error {
 	data := url.Values{}
 	data.Set("api_type", "json")
 	data.Set("text", text)
@@ -119,7 +118,7 @@ func (rc RedditClient) SubmitComment(postId, text string) error {
 	return nil
 }
 
-func (rc RedditClient) IsCommentedByUser(submissionId string, author string) bool {
+func (rc *RedditClient) IsCommentedByUser(submissionId string, author string) bool {
 	comments, _ := rc.GetCommentsBySubmissionId(submissionId, 100)
 	for _, comment := range comments {
 		if comment.Author == author {

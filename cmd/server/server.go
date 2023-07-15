@@ -5,7 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"github.com/aattwwss/ssd-bot-go/internal/config"
-	"github.com/aattwwss/ssd-bot-go/pkg/elasticsearch"
+	"github.com/aattwwss/ssd-bot-go/pkg/ssd"
 	"os"
 	"regexp"
 	"strings"
@@ -38,7 +38,7 @@ func main() {
 		log.Fatal().Msgf("Init reddit client error: %v", err)
 	}
 	es, _ := elasticutil.NewElasticsearchClient(cfg.EsAddress)
-	esRepo := elasticsearch.NewEsSSDRepository(es, "ssd-index")
+	esRepo := ssd.NewEsRepository(es, "ssd-index")
 	// doTest(esRepo)
 	for {
 		log.Info().Msg("Start searching...")
@@ -51,7 +51,7 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, cfg config.Config, rc *reddit.RedditClient, esRepo *elasticsearch.EsSSDRepository) error {
+func run(ctx context.Context, cfg config.Config, rc *reddit.RedditClient, esRepo *ssd.EsRepository) error {
 	newSubmissions, err := rc.GetNewSubmissions(cfg.Subreddit, 25)
 	if err != nil {
 		return err
@@ -130,7 +130,7 @@ func cleanTitle(s string) string {
 	return s
 }
 
-func doTest(esRepo *elasticsearch.EsSSDRepository) {
+func doTest(esRepo *ssd.EsRepository) {
 	// Open the input CSV file for reading
 	inputFile, err := os.Open("test/input.csv")
 	if err != nil {

@@ -1,11 +1,10 @@
-package techpowerup
+package ssd
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/aattwwss/ssd-bot-go/pkg/ssd"
 	"net/http"
 )
 
@@ -15,21 +14,21 @@ type response[T any] struct {
 	Result  T      `json:"result"`
 }
 
-type TpuSSDRepository struct {
+type TpuRepository struct {
 	host     string
 	username string
 	apikey   string
 }
 
-func NewTpuSSDRepository(host, username, apiKey string) *TpuSSDRepository {
-	return &TpuSSDRepository{
+func NewTpuRepository(host, username, apiKey string) *TpuRepository {
+	return &TpuRepository{
 		host:     host,
 		username: username,
 		apikey:   apiKey,
 	}
 }
 
-func (tpu *TpuSSDRepository) FindById(ctx context.Context, id string) (*ssd.SSD, error) {
+func (tpu *TpuRepository) FindById(ctx context.Context, id string) (*SSD, error) {
 	url := fmt.Sprintf("%s/ssd-specs/api/%s/v1/query?key=%s&id=%s", tpu.host, tpu.username, tpu.apikey, id)
 
 	resp, err := http.Get(url)
@@ -38,7 +37,7 @@ func (tpu *TpuSSDRepository) FindById(ctx context.Context, id string) (*ssd.SSD,
 	}
 	defer resp.Body.Close()
 
-	var tpuRes response[ssd.SSD]
+	var tpuRes response[SSD]
 	err = json.NewDecoder(resp.Body).Decode(&tpuRes)
 	if err != nil {
 		return nil, err
@@ -54,7 +53,7 @@ func (tpu *TpuSSDRepository) FindById(ctx context.Context, id string) (*ssd.SSD,
 	return &tpuRes.Result, nil
 }
 
-func (tpu *TpuSSDRepository) SearchBasic(ctx context.Context, s string) ([]ssd.SSDBasic, error) {
+func (tpu *TpuRepository) SearchBasic(ctx context.Context, s string) ([]SSDBasic, error) {
 	url := fmt.Sprintf("%s/ssd-specs/api/%s/v1/lookup?key=%s&id=%s", tpu.host, tpu.username, tpu.apikey, s)
 
 	resp, err := http.Get(url)
@@ -63,7 +62,7 @@ func (tpu *TpuSSDRepository) SearchBasic(ctx context.Context, s string) ([]ssd.S
 	}
 	defer resp.Body.Close()
 
-	var tpuRes response[[]ssd.SSDBasic]
+	var tpuRes response[[]SSDBasic]
 	err = json.NewDecoder(resp.Body).Decode(&tpuRes)
 	if err != nil {
 		return nil, err
@@ -77,16 +76,16 @@ func (tpu *TpuSSDRepository) SearchBasic(ctx context.Context, s string) ([]ssd.S
 	return tpuRes.Result, nil
 }
 
-func (tpu *TpuSSDRepository) Search(ctx context.Context, s string) ([]ssd.SSD, error) {
+func (tpu *TpuRepository) Search(ctx context.Context, s string) ([]SSD, error) {
 	return nil, nil
 }
 
-func (tpu *TpuSSDRepository) Insert(ctx context.Context, ssd ssd.SSD) error {
+func (tpu *TpuRepository) Insert(ctx context.Context, ssd SSD) error {
 	//TODO implement this
 	return nil
 }
 
-func (tpu *TpuSSDRepository) Update(ctx context.Context, ssd ssd.SSD) error {
+func (tpu *TpuRepository) Update(ctx context.Context, ssd SSD) error {
 	//TODO implement this
 	return nil
 }

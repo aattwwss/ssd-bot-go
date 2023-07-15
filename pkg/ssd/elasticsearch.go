@@ -1,11 +1,10 @@
-package elasticsearch
+package ssd
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/aattwwss/ssd-bot-go/pkg/ssd"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,20 +15,20 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type EsSSDRepository struct {
+type EsRepository struct {
 	EsClient *elasticsearch.Client
 	Index    string
 }
 
-func NewEsSSDRepository(esClient *elasticsearch.Client, index string) *EsSSDRepository {
-	return &EsSSDRepository{
+func NewEsRepository(esClient *elasticsearch.Client, index string) *EsRepository {
+	return &EsRepository{
 		EsClient: esClient,
 		Index:    index,
 	}
 }
 
-func (esRepo *EsSSDRepository) FindById(ctx context.Context, driveId string) (*ssd.SSD, error) {
-	var ssdResponse elasticutil.SearchResponse[ssd.SSD]
+func (esRepo *EsRepository) FindById(ctx context.Context, driveId string) (*SSD, error) {
+	var ssdResponse elasticutil.SearchResponse[SSD]
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"term": map[string]interface{}{
@@ -47,9 +46,9 @@ func (esRepo *EsSSDRepository) FindById(ctx context.Context, driveId string) (*s
 	return &ssdResponse.Hits.Hits[0].Source, nil
 }
 
-func (esRepo *EsSSDRepository) SearchBasic(ctx context.Context, s string) ([]ssd.SSDBasic, error) {
-	var ssdResponse elasticutil.SearchResponse[ssd.SSDBasic]
-	var res []ssd.SSDBasic
+func (esRepo *EsRepository) SearchBasic(ctx context.Context, s string) ([]SSDBasic, error) {
+	var ssdResponse elasticutil.SearchResponse[SSDBasic]
+	var res []SSDBasic
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"multi_match": map[string]interface{}{
@@ -81,9 +80,9 @@ type BoolQueryParams struct {
 	MinimumShouldMatch int           `json:"minimum_should_match,omitempty"`
 }
 
-func (esRepo *EsSSDRepository) Search(ctx context.Context, searchQuery string) ([]ssd.SSD, error) {
-	var ssdResponse elasticutil.SearchResponse[ssd.SSD]
-	var res []ssd.SSD
+func (esRepo *EsRepository) Search(ctx context.Context, searchQuery string) ([]SSD, error) {
+	var ssdResponse elasticutil.SearchResponse[SSD]
+	var res []SSD
 
 	boolQuery := BoolQuery{
 		Bool: BoolQueryParams{
@@ -125,26 +124,12 @@ func (esRepo *EsSSDRepository) Search(ctx context.Context, searchQuery string) (
 	return res, nil
 }
 
-// rules to ensure no false positives
-// 1. Manufacturer must be in the search query
-// 2. Name must be in the search query (without the heatsink part)
-func sanityCheck(searchQuery string, ssd ssd.SSD) bool {
-	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssd.Manufacturer, " ", ""))) {
-		return false
-	}
-	ssdName := strings.ReplaceAll(ssd.Name, "(w/ Heatsink)", "")
-	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssdName, " ", ""))) {
-		return false
-	}
-	return true
-}
-
-func (esRepo *EsSSDRepository) Update(ctx context.Context, ssd ssd.SSD) error {
+func (esRepo *EsRepository) Update(ctx context.Context, ssd SSD) error {
 	//TODO implement this
 	return nil
 }
 
-func (esRepo *EsSSDRepository) Insert(ctx context.Context, ssd ssd.SSD) error {
+func (esRepo *EsRepository) Insert(ctx context.Context, ssd SSD) error {
 	// Build the request body.
 	data, err := json.Marshal(ssd)
 	if err != nil {
@@ -176,7 +161,7 @@ func (esRepo *EsSSDRepository) Insert(ctx context.Context, ssd ssd.SSD) error {
 }
 
 // wrapper for search queries to Elastic client
-func (esRepo *EsSSDRepository) doSearch(ctx context.Context, query map[string]interface{}, payload any) error {
+func (esRepo *EsRepository) doSearch(ctx context.Context, query map[string]interface{}, payload any) error {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
 		log.Error().Msgf("Error encoding query: %s", err)
@@ -214,6 +199,20 @@ func (esRepo *EsSSDRepository) doSearch(ctx context.Context, query map[string]in
 		return errors.New("search payload decode error")
 	}
 	return nil
+}
+
+// rules to ensure no false positives
+// 1. Manufacturer must be in the search query
+// 2. Name must be in the search query (without the heatsink part)
+func sanityCheck(searchQuery string, ssd SSD) bool {
+	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssd.Manufacturer, " ", ""))) {
+		return false
+	}
+	ssdName := strings.ReplaceAll(ssd.Name, "(w/ Heatsink)", "")
+	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssdName, " ", ""))) {
+		return false
+	}
+	return true
 }
 
 // parseCapacity parses a string for a capacity in TB or GB

@@ -4,9 +4,7 @@ import (
 	"context"
 	"flag"
 	"github.com/aattwwss/ssd-bot-go/internal/config"
-	"github.com/aattwwss/ssd-bot-go/pkg/elasticsearch"
 	"github.com/aattwwss/ssd-bot-go/pkg/ssd"
-	"github.com/aattwwss/ssd-bot-go/pkg/techpowerup"
 	"strconv"
 	"time"
 
@@ -39,8 +37,8 @@ func main() {
 	flag.Parse()
 
 	es, _ := elasticutil.NewElasticsearchClient(cfg.EsAddress)
-	esRepo := elasticsearch.NewEsSSDRepository(es, "ssd-index")
-	tpuRepo := techpowerup.NewTpuSSDRepository(cfg.TPUHost, cfg.TPUUsername, cfg.TPUSecret)
+	esRepo := ssd.NewEsRepository(es, "ssd-index")
+	tpuRepo := ssd.NewTpuRepository(cfg.TPUHost, cfg.TPUUsername, cfg.TPUSecret)
 
 	param := syncParam{
 		StartId:  *startId,
