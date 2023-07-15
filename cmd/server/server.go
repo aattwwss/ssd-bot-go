@@ -33,7 +33,7 @@ func main() {
 		log.Fatal().Msgf("Parse env error: %v", err)
 	}
 
-	rc, err := reddit.NewRedditClient(cfg.ClientId, cfg.ClientSecret, cfg.Username, cfg.Password, cfg.Token, cfg.ExpireTimeMilli, cfg.OverrideOldBot, cfg.IsDebug)
+	rc, err := reddit.NewRedditClient(cfg.ClientId, cfg.ClientSecret, cfg.Username, cfg.Password, cfg.Token, cfg.ExpireTimeMilli, cfg.OverrideOldBot)
 	if err != nil {
 		log.Fatal().Msgf("Init reddit client error: %v", err)
 	}
@@ -51,7 +51,7 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, cfg config.Config, rc *reddit.RedditClient, esRepo *ssd.EsRepository) error {
+func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.EsRepository) error {
 	newSubmissions, err := rc.GetNewSubmissions(cfg.Subreddit, 25)
 	if err != nil {
 		return err
