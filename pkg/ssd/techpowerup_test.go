@@ -1,6 +1,7 @@
 package ssd
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -34,8 +35,8 @@ func TestTpuFindById(t *testing.T) {
 	server := setup(t)
 	defer server.Close()
 
-	tpu := NewTpuSSDRepository(server.URL, "username", "apikey")
-	ssd, err := tpu.FindById("1461")
+	tpu := NewTpuRepository(server.URL, "username", "apikey")
+	ssd, err := tpu.FindById(context.Background(), "1461")
 	if err != nil {
 		t.Errorf("Error getting ssd data: %s", err)
 	}
@@ -58,8 +59,8 @@ func TestTpuSearch(t *testing.T) {
 	server := setup(t)
 	defer server.Close()
 
-	tpu := NewTpuSSDRepository(server.URL, "username", "apikey")
-	ssds, err := tpu.Search("search")
+	tpu := NewTpuRepository(server.URL, "username", "apikey")
+	ssds, err := tpu.Search(context.Background(), "search")
 	if err != nil {
 		t.Errorf("Error searching ssd data: %s", err)
 	}

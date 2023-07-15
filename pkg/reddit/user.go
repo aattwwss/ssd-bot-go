@@ -20,9 +20,9 @@ type UserComment struct {
 	Name           string `json:"name"`
 }
 
-func (rc RedditClient) GetUserNewestComments(limit int) ([]UserComment, error) {
-	url := fmt.Sprintf("https://oauth.reddit.com/user/%s/comments?limit=%v", rc.username, limit)
-	req, err := rc.newRequest("GET", url, nil)
+func (rc *Client) GetUserNewestComments(limit int) ([]UserComment, error) {
+	redditUrl := fmt.Sprintf("https://oauth.reddit.com/user/%s/comments?limit=%v", rc.username, limit)
+	req, err := rc.newRequest("GET", redditUrl, nil)
 	if err != nil {
 		log.Error().Msgf("Error creating request: %v", err)
 		return nil, err

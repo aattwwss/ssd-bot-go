@@ -19,7 +19,7 @@ type tokenRes struct {
 	Scope       string `json:"scope"`
 }
 
-type RedditClient struct {
+type Client struct {
 	httpClient     *http.Client
 	clientId       string
 	clientSecret   string
@@ -29,15 +29,13 @@ type RedditClient struct {
 
 	accessToken          string
 	tokenExpireTimeMilli int64
-
-	isDebug bool
 }
 
 const (
 	userAgent = "SSD bot v2.0 by /u/_SSD_BOT_ github.com/aattwwss/ssd-bot-go" //need to set user agent to prevent getting blocked by reddit
 )
 
-func NewRedditClient(clientId, clientSecret, username, password, accessToken string, expireTimeMilli int64, overrideOldBot, isDebug bool) (*RedditClient, error) {
+func NewRedditClient(clientId, clientSecret, username, password, accessToken string, expireTimeMilli int64, overrideOldBot bool) (*Client, error) {
 	if clientId == "" || clientSecret == "" || username == "" || password == "" {
 		return nil, errors.New("clientId, clientSecret, username, password cannot be empty")
 	}
@@ -46,7 +44,7 @@ func NewRedditClient(clientId, clientSecret, username, password, accessToken str
 		Timeout: time.Second * 10,
 	}
 
-	rc := RedditClient{
+	rc := Client{
 		httpClient:           httpClient,
 		clientId:             clientId,
 		clientSecret:         clientSecret,
@@ -55,7 +53,6 @@ func NewRedditClient(clientId, clientSecret, username, password, accessToken str
 		overrideOldBot:       overrideOldBot,
 		accessToken:          accessToken,
 		tokenExpireTimeMilli: expireTimeMilli,
-		isDebug:              isDebug,
 	}
 
 	err := rc.RefreshToken()
@@ -66,7 +63,7 @@ func NewRedditClient(clientId, clientSecret, username, password, accessToken str
 	return &rc, nil
 }
 
-func (rc *RedditClient) RefreshToken() error {
+func (rc *Client) RefreshToken() error {
 	now := time.Now()
 	durationFromExpire := time.UnixMilli(rc.tokenExpireTimeMilli).Sub(now).Minutes()
 	if durationFromExpire > 30 {
@@ -114,16 +111,15 @@ func (rc *RedditClient) RefreshToken() error {
 	rc.accessToken = tokenRes.AccessToken
 	rc.tokenExpireTimeMilli = now.Add(time.Duration(tokenRes.ExpiresIn) * time.Second).UnixMilli()
 
-	if rc.isDebug {
-		log.Info().Msgf("token res: %v", tokenRes)
-		log.Info().Msgf("access token: %v", rc.accessToken)
-		log.Info().Msgf("expire time milli: %v", rc.tokenExpireTimeMilli)
-	}
 	return nil
 }
 
-func (rc *RedditClient) newRequest(method string, url string, body io.Reader) (*http.Request, error) {
-	rc.RefreshToken()
+func (rc *Client) newRequest(method string, url string, body io.Reader) (*http.Request, error) {
+	err := rc.RefreshToken()
+	if err != nil {
+		return nil, err
+	}
+
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
