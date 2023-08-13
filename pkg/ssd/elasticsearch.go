@@ -107,6 +107,16 @@ func (esRepo *EsRepository) Search(ctx context.Context, searchQuery string) ([]S
 		boolQuery.Bool.Must = append(boolQuery.Bool.Must, capacityQuery)
 	}
 
+	ff, ok := parseFormFactor(searchQuery)
+	if ok {
+		ffQuery := map[string]interface{}{
+			"term": map[string]interface{}{
+				"formFactor": ff,
+			},
+		}
+		boolQuery.Bool.Must = append(boolQuery.Bool.Must, ffQuery)
+	}
+
 	query := map[string]interface{}{
 		"query": boolQuery,
 	}
@@ -228,4 +238,20 @@ func parseCapacity(s string) (int, bool) {
 		return 0, false
 	}
 	return capacity, true
+}
+
+// parseFormFactor parses a string for the length of a ssd
+func parseFormFactor(s string) (int, bool) {
+	ssdLength := []int{
+		2230,
+		2280,
+		2242,
+		22110,
+	}
+	for _, l := range ssdLength {
+		if strings.Contains(s, strconv.Itoa(l)) {
+			return l, true
+		}
+	}
+	return 0, false
 }
