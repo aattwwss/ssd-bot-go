@@ -85,7 +85,7 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 		_, ok := botCommentsMap[submission.ID]
 		if ok {
 			log.Info().Msgf("This bot already commented on this submission: %s", submission.Title)
-			// continue
+			continue
 		}
 
 		log.Info().Msgf("Found submission: %s", submission.Title)
@@ -99,7 +99,7 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 			continue
 		}
 		found := ssdList[0]
-		// err = rc.SubmitComment(submission.ID, found.ToMarkdown())
+		err = rc.SubmitComment(submission.ID, found.ToMarkdown())
 		if err != nil {
 			return err
 		}
