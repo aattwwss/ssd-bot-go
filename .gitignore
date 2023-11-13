@@ -19,3 +19,7 @@
 .env
 credential.json
 logs.txt
+server
+server.exr
+sync
+sync.exe
