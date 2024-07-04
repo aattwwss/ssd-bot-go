@@ -117,7 +117,13 @@ func (esRepo *EsRepository) Search(ctx context.Context, searchQuery string) ([]S
 		boolQuery.Bool.Must = append(boolQuery.Bool.Must, ffQuery)
 	}
 
+	// we save driveId as a number inside elasticsearch
+	sort := []map[string]string{
+		{"driveId": "desc"},
+	}
+
 	query := map[string]interface{}{
+		"sort":  sort,
 		"query": boolQuery,
 	}
 
