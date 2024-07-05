@@ -117,13 +117,7 @@ func (esRepo *EsRepository) Search(ctx context.Context, searchQuery string) ([]S
 		boolQuery.Bool.Must = append(boolQuery.Bool.Must, ffQuery)
 	}
 
-	// we save driveId as a number inside elasticsearch
-	sort := []map[string]string{
-		{"driveId": "desc"},
-	}
-
 	query := map[string]interface{}{
-		"sort":  sort,
 		"query": boolQuery,
 	}
 
@@ -133,9 +127,7 @@ func (esRepo *EsRepository) Search(ctx context.Context, searchQuery string) ([]S
 	}
 
 	for _, hit := range ssdResponse.Hits.Hits {
-		if sanityCheck(searchQuery, hit.Source) {
-			res = append(res, hit.Source)
-		}
+		res = append(res, hit.Source)
 	}
 	return res, nil
 }
@@ -170,7 +162,7 @@ func (esRepo *EsRepository) Insert(ctx context.Context, ssd SSD) error {
 	defer res.Body.Close()
 
 	if res.IsError() {
-		log.Error().Msgf("[%s] Error indexing document ID=%d", res.Status(), ssd.DriveID)
+		log.Error().Msgf("[%s] Error indexing document ID=%v", res.Status(), ssd.DriveID)
 		return errors.New("index ssd response error")
 	}
 	return nil
@@ -215,20 +207,6 @@ func (esRepo *EsRepository) doSearch(ctx context.Context, query map[string]inter
 		return errors.New("search payload decode error")
 	}
 	return nil
-}
-
-// rules to ensure no false positives
-// 1. Manufacturer must be in the search query
-// 2. Name must be in the search query (without the heatsink part)
-func sanityCheck(searchQuery string, ssd SSD) bool {
-	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssd.Manufacturer, " ", ""))) {
-		return false
-	}
-	ssdName := strings.ReplaceAll(ssd.Name, "(w/ Heatsink)", "")
-	if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssdName, " ", ""))) {
-		return false
-	}
-	return true
 }
 
 // parseCapacity parses a string for a capacity in TB or GB
