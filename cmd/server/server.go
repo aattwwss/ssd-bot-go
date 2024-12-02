@@ -103,9 +103,12 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 			continue
 		}
 		sort.Slice(ssdList, func(i, j int) bool {
-			numI, _ := strconv.Atoi(ssdList[i].DriveID)
-			numJ, _ := strconv.Atoi(ssdList[j].DriveID)
-			return numI > numJ
+			if len(ssdList[i].Name) == len(ssdList[j].Name) {
+				numI, _ := strconv.Atoi(ssdList[i].DriveID)
+				numJ, _ := strconv.Atoi(ssdList[j].DriveID)
+				return numI > numJ
+			}
+			return len(ssdList[i].Name) > len(ssdList[j].Name)
 		})
 		found := ssdList[0]
 		err = rc.SubmitComment(submission.ID, found.ToMarkdown())
@@ -130,7 +133,15 @@ func sanityCheck(searchQuery string, ssds []ssd.SSD) []ssd.SSD {
 			continue
 		}
 		ssdName := strings.ReplaceAll(ssd.Name, "(w/ Heatsink)", "")
-		if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssdName, " ", ""))) {
+		words := strings.Split(ssdName, " ")
+		hasMissingWord := false
+		for _, word := range words {
+			if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(word, " ", ""))) {
+				hasMissingWord = true
+				break
+			}
+		}
+		if hasMissingWord {
 			continue
 		}
 		filtered = append(filtered, ssd)
