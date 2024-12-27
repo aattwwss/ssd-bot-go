@@ -103,12 +103,14 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 			continue
 		}
 		sort.Slice(ssdList, func(i, j int) bool {
-			if len(ssdList[i].Name) == len(ssdList[j].Name) {
+			iName := strings.ReplaceAll(ssdList[i].Name, "(w/ Heatsink)", "")
+			jName := strings.ReplaceAll(ssdList[i].Name, "(w/ Heatsink)", "")
+			if len(iName) == len(jName) {
 				numI, _ := strconv.Atoi(ssdList[i].DriveID)
 				numJ, _ := strconv.Atoi(ssdList[j].DriveID)
 				return numI > numJ
 			}
-			return len(ssdList[i].Name) > len(ssdList[j].Name)
+			return len(iName) > len(jName)
 		})
 		found := ssdList[0]
 		err = rc.SubmitComment(submission.ID, found.ToMarkdown())
