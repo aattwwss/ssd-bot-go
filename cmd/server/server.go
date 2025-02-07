@@ -162,6 +162,7 @@ func cleanTitle(s string) string {
 	stringsToReplace := map[string]string{
 		" wd":        " western digital",
 		"team group": " teamgroup",
+		"spatium": " msi spatium",
 	}
 	for k, v := range stringsToReplace {
 		if strings.Contains(s, k) {
