@@ -95,7 +95,7 @@ func (ssd SSD) ToMarkdown() string {
 		fmt.Sprintf("* Endurance: **%s**", ssd.Endurance),
 		fmt.Sprintf("* Price History: **[camelcamelcamel](https://camelcamelcamel.com/search?sq=%s)**", url.QueryEscape(ssd.Manufacturer+" "+ssd.Name+" "+ssd.Capacity)),
 		fmt.Sprintf("* Detailed Link: **[TechPowerUp SSD Database](%s)**", ssd.URL),
-		fmt.Sprintf("* Variations: **[TechPowerUp SSD](%s)**", "https://www.techpowerup.com/ssd-specs/#"+url.QueryEscape(ssd.Manufacturer+" "+ssd.Name)),
+		fmt.Sprintf("* Variations: **[TechPowerUp SSD](%s)**", "https://www.techpowerup.com/ssd-specs/?q="+url.QueryEscape(ssd.Manufacturer+" "+ssd.Name)),
 		fmt.Sprintf("---\n%s", ref),
 	}
 	return strings.Join(arr, "\n\n")
