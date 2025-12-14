@@ -81,6 +81,7 @@ type BoolQueryParams struct {
 }
 
 func (esRepo *EsRepository) Search(ctx context.Context, searchQuery string) ([]SSD, error) {
+	log.Info().Msgf("searching using this query: %s", searchQuery)
 	var ssdResponse elasticutil.SearchResponse[SSD]
 	var res []SSD
 
@@ -237,6 +238,7 @@ func parseCapacity(s string) (int, bool) {
 	if err != nil {
 		return 0, false
 	}
+	log.Info().Msgf("found capacity: %v", capacity)
 	return capacity, true
 }
 
@@ -250,6 +252,7 @@ func parseFormFactor(s string) (int, bool) {
 	}
 	for _, l := range ssdLength {
 		if strings.Contains(s, strconv.Itoa(l)) {
+			log.Info().Msgf("found form factor: %v", l)
 			return l, true
 		}
 	}
