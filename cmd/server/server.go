@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -89,15 +91,27 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 		}
 
 		log.Info().Msgf("Found submission: %s", submission.Title)
-		ssdList, err := esRepo.Search(ctx, cleanTitle(submission.Title))
+		title := cleanTitle(submission.Title)
+		ssdList, err := esRepo.Search(ctx, title)
 		if err != nil {
 			log.Error().Msgf("Error searching for ssd: %v", err)
 			continue
 		}
+		ssdList = sanityCheck(title, ssdList)
 		if len(ssdList) == 0 {
 			log.Info().Msgf("SSD not found in database: %s", submission.Title)
 			continue
 		}
+		sort.Slice(ssdList, func(i, j int) bool {
+			iName := strings.ReplaceAll(ssdList[i].Name, "(w/ Heatsink)", "")
+			jName := strings.ReplaceAll(ssdList[i].Name, "(w/ Heatsink)", "")
+			if len(iName) == len(jName) {
+				numI, _ := strconv.Atoi(ssdList[i].DriveID)
+				numJ, _ := strconv.Atoi(ssdList[j].DriveID)
+				return numI > numJ
+			}
+			return len(iName) > len(jName)
+		})
 		found := ssdList[0]
 		err = rc.SubmitComment(submission.ID, found.ToMarkdown())
 		if err != nil {
@@ -111,6 +125,32 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 	return nil
 }
 
+// rules to ensure no false positives
+// 1. Manufacturer must be in the search query
+// 2. Name must be in the search query (without the heatsink part)
+func sanityCheck(searchQuery string, ssds []ssd.SSD) []ssd.SSD {
+	var filtered []ssd.SSD
+	for _, ssd := range ssds {
+		if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssd.Manufacturer, " ", ""))) {
+			continue
+		}
+		ssdName := strings.ReplaceAll(ssd.Name, "(w/ Heatsink)", "")
+		words := strings.Split(ssdName, " ")
+		hasMissingWord := false
+		for _, word := range words {
+			if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(word, " ", ""))) {
+				hasMissingWord = true
+				break
+			}
+		}
+		if hasMissingWord {
+			continue
+		}
+		filtered = append(filtered, ssd)
+	}
+	return filtered
+}
+
 func cleanTitle(s string) string {
 	s = strings.ToLower(s)
 	s = regexp.MustCompile(`\[[^\]]+\]`).ReplaceAllString(s, "")
@@ -122,6 +162,8 @@ func cleanTitle(s string) string {
 	stringsToReplace := map[string]string{
 		" wd":        " western digital",
 		"team group": " teamgroup",
+		"spatium":    " msi spatium",
+		"sn850x":     " western digital sn850x",
 	}
 	for k, v := range stringsToReplace {
 		if strings.Contains(s, k) {
