@@ -131,7 +131,9 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 func sanityCheck(searchQuery string, ssds []ssd.SSD) []ssd.SSD {
 	var filtered []ssd.SSD
 	for _, ssd := range ssds {
+		log.Info().Msgf("checking %s %s", ssd.Manufacturer, ssd.Name)
 		if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssd.Manufacturer, " ", ""))) {
+			log.Info().Msgf("skipping %s %s because manufacturer is missing from search query", ssd.Manufacturer, ssd.Name)
 			continue
 		}
 		ssdName := strings.ReplaceAll(ssd.Name, "(w/ Heatsink)", "")
@@ -140,6 +142,7 @@ func sanityCheck(searchQuery string, ssds []ssd.SSD) []ssd.SSD {
 		for _, word := range words {
 			if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(word, " ", ""))) {
 				hasMissingWord = true
+				log.Info().Msgf("skipping %s %s because %s is missing from search query", ssd.Manufacturer, ssd.Name, word)
 				break
 			}
 		}
