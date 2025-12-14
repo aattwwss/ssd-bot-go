@@ -112,6 +112,7 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 			}
 			return len(iName) > len(jName)
 		})
+		log.Info().Msgf("Final sorted filtered list %v", ssdList)
 		found := ssdList[0]
 		err = rc.SubmitComment(submission.ID, found.ToMarkdown())
 		if err != nil {
