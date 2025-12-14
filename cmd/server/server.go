@@ -146,10 +146,9 @@ func sanityCheck(searchQuery string, ssds []ssd.SSD) []ssd.SSD {
 				break
 			}
 		}
-		if hasMissingWord {
-			continue
+		if !hasMissingWord {
+			filtered = append(filtered, ssd)
 		}
-		filtered = append(filtered, ssd)
 	}
 	return filtered
 }
@@ -157,7 +156,7 @@ func sanityCheck(searchQuery string, ssds []ssd.SSD) []ssd.SSD {
 func cleanTitle(s string) string {
 	s = strings.ToLower(s)
 	s = regexp.MustCompile(`\[[^\]]+\]`).ReplaceAllString(s, "")
-	stringsToRemove := []string{"ssd", "m2", "m.2", "nvme", "pcie", "gen"}
+	stringsToRemove := []string{"ssd", "m2", "m.2", "nvme", "pcie", "gen", "amazon"}
 	for _, toReplace := range stringsToRemove {
 		s = strings.ReplaceAll(s, toReplace, "")
 	}
