@@ -147,6 +147,7 @@ func sanityCheck(searchQuery string, ssds []ssd.SSD) []ssd.SSD {
 			}
 		}
 		if !hasMissingWord {
+			log.Info().Msgf("adding %s %s to filtered list", ssd.Manufacturer, ssd.Name)
 			filtered = append(filtered, ssd)
 		}
 	}
