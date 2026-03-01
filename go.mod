@@ -1,6 +1,6 @@
 module github.com/aattwwss/ssd-bot-go
 
-go 1.25
+go 1.26
 
 require (
 	github.com/caarlos0/env/v8 v8.0.0
