@@ -199,23 +199,30 @@ func sanityCheck(searchQuery string, ssds []ssd.SSD) []ssd.SSD {
 func cleanTitle(s string) string {
 	s = strings.ToLower(s)
 	s = regexp.MustCompile(`\[[^\]]+\]`).ReplaceAllString(s, "")
+
+	// Remove common strings that don't help with SSD identification
 	stringsToRemove := []string{"ssd", "m2", "m.2", "nvme", "pcie", "gen", "amazon"}
 	for _, toReplace := range stringsToRemove {
 		s = strings.ReplaceAll(s, toReplace, "")
 	}
 
+	// Build the result string with expansions
+	var builder strings.Builder
+	builder.WriteString(s)
+
+	// Add expansions for known abbreviations
 	stringsToReplace := map[string]string{
-		" wd":        " western digital",
-		"team group": " teamgroup",
-		"spatium":    " msi spatium",
-		"sn850x":     " western digital sn850x",
+		" wd":         " western digital",
+		"team group":  " teamgroup",
+		"spatium":     " msi spatium",
+		"sn850x":      " western digital sn850x",
 	}
 	for k, v := range stringsToReplace {
 		if strings.Contains(s, k) {
-			s = s + v
+			builder.WriteString(v)
 		}
 	}
-	return s
+	return builder.String()
 }
 
 func doTest(esRepo *ssd.EsRepository) error {

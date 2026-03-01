@@ -56,7 +56,7 @@ func main() {
 		StartId:  *startId,
 		EndId:    *endId,
 		Delay:    DEFAULT_SYNC_DELAY,
-		IdToSkip: []int{},
+		IdToSkip: nil,
 	}
 	err = sync(context.Background(), tpuRepo, esRepo, param)
 	if err != nil {

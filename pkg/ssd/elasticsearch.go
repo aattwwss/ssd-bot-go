@@ -16,11 +16,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// EsRepository is an Elasticsearch implementation of the Repository interface.
 type EsRepository struct {
 	EsClient *elasticsearch.Client
 	Index    string
 }
 
+// NewEsRepository creates a new Elasticsearch repository instance.
 func NewEsRepository(esClient *elasticsearch.Client, index string) *EsRepository {
 	return &EsRepository{
 		EsClient: esClient,

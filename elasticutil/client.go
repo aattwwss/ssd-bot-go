@@ -1,3 +1,4 @@
+// Package elasticutil provides utility functions for working with Elasticsearch.
 package elasticutil
 
 import (
@@ -9,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// NewElasticsearchClient creates a new Elasticsearch client with the given address.
 func NewElasticsearchClient(address string) (*elasticsearch.Client, error) {
 	cfg := elasticsearch.Config{
 		Addresses: []string{address},
@@ -50,6 +52,7 @@ func GetInfo(es *elasticsearch.Client) {
 	log.Info().Msg(strings.Repeat("~", 37))
 }
 
+// SearchResponse represents an Elasticsearch search response.
 type SearchResponse[T any] struct {
 	Took     int  `json:"took"`
 	TimedOut bool `json:"timed_out"`

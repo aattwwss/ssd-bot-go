@@ -16,12 +16,14 @@ type response[T any] struct {
 	Result  T      `json:"result"`
 }
 
+// TpuRepository is a TechPowerUp API implementation of the Repository interface.
 type TpuRepository struct {
 	host     string
 	username string
 	apikey   string
 }
 
+// NewTpuRepository creates a new TechPowerUp repository instance.
 func NewTpuRepository(host, username, apiKey string) *TpuRepository {
 	return &TpuRepository{
 		host:     host,

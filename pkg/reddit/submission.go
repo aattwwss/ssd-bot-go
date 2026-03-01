@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Submission represents a Reddit post/submission.
 type Submission struct {
 	ID            string `json:"id"`
 	Subreddit     string `json:"subreddit"`
@@ -17,6 +18,7 @@ type Submission struct {
 	LinkFlairText string `json:"link_flair_text"`
 }
 
+// GetNewSubmissions fetches the newest submissions from a subreddit.
 func (rc *Client) GetNewSubmissions(subreddit string, limit int) ([]Submission, error) {
 	redditUrl := fmt.Sprintf("https://oauth.reddit.com/r/%s/new?limit=%v", subreddit, limit)
 	req, err := rc.newRequest("GET", redditUrl, nil)
@@ -48,6 +50,7 @@ func (rc *Client) GetNewSubmissions(subreddit string, limit int) ([]Submission, 
 	return posts, nil
 }
 
+// SubmissionComment represents a comment on a Reddit submission.
 type SubmissionComment struct {
 	SubredditID    string `json:"subreddit_id"`
 	Subreddit      string `json:"subreddit"`
@@ -60,6 +63,7 @@ type SubmissionComment struct {
 	IsSubmitter    bool   `json:"is_submitter"`
 }
 
+// GetCommentsBySubmissionId fetches comments for a specific submission.
 func (rc *Client) GetCommentsBySubmissionId(submissionId string, limit int) ([]SubmissionComment, error) {
 	redditUrl := fmt.Sprintf("https://oauth.reddit.com/comments/%s?limit=%v&depth=1", submissionId, limit)
 	req, err := rc.newRequest("GET", redditUrl, nil)
@@ -89,13 +93,14 @@ func (rc *Client) GetCommentsBySubmissionId(submissionId string, limit int) ([]S
 		return nil, fmt.Errorf("invalid response format: expected at least 2 listings, got %d", len(listings))
 	}
 	var submissionComments []SubmissionComment
-	// hardcoding to use the 2nd element as the first is the post information
+	// The second element contains comments (first element is the post itself)
 	for _, child := range listings[1].Data.Children {
 		submissionComments = append(submissionComments, child.Data)
 	}
 	return submissionComments, nil
 }
 
+// SubmitComment posts a comment on a submission.
 func (rc *Client) SubmitComment(postId, text string) error {
 	data := url.Values{}
 	data.Set("api_type", "json")
@@ -121,6 +126,7 @@ func (rc *Client) SubmitComment(postId, text string) error {
 	return nil
 }
 
+// IsCommentedByUser checks if a user has commented on a submission.
 func (rc *Client) IsCommentedByUser(submissionId string, author string) bool {
 	comments, err := rc.GetCommentsBySubmissionId(submissionId, 100)
 	if err != nil {

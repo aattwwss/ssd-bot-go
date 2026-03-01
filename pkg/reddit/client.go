@@ -2,7 +2,6 @@ package reddit
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,6 +28,7 @@ type tokenRes struct {
 	Scope       string `json:"scope"`
 }
 
+// Client is a Reddit API client that handles authentication and requests.
 type Client struct {
 	httpClient     *http.Client
 	clientId       string
@@ -42,9 +42,10 @@ type Client struct {
 	mu                   sync.RWMutex
 }
 
+// NewRedditClient creates a new Reddit client with the provided credentials.
 func NewRedditClient(clientId, clientSecret, username, password, accessToken string, expireTimeMilli int64, overrideOldBot bool) (*Client, error) {
 	if clientId == "" || clientSecret == "" || username == "" || password == "" {
-		return nil, errors.New("clientId, clientSecret, username, password cannot be empty")
+		return nil, fmt.Errorf("clientId, clientSecret, username, and password are required")
 	}
 
 	httpClient := &http.Client{
@@ -157,5 +158,5 @@ func retryHttpRequest(client *http.Client, req *http.Request, attempts int, slee
 		sleep *= 2 // increase delay exponentially
 	}
 
-	return nil, errors.New("http request exceeded retry attempts")
+	return nil, fmt.Errorf("http request exceeded %d retry attempts", attempts)
 }
