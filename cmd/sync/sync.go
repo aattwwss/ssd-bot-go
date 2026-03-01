@@ -36,19 +36,22 @@ func main() {
 	endId := flag.Int("endId", 1550, "End ID to sync to")
 	flag.Parse()
 
-	es, _ := elasticutil.NewElasticsearchClient(cfg.EsAddress)
+	es, err := elasticutil.NewElasticsearchClient(cfg.EsAddress)
+	if err != nil {
+		log.Fatal().Msgf("Init elasticsearch client error: %v", err)
+	}
 	esRepo := ssd.NewEsRepository(es, "ssd-index")
 	tpuRepo := ssd.NewTpuRepository(cfg.TPUHost, cfg.TPUUsername, cfg.TPUSecret)
 
 	param := syncParam{
 		StartId:  *startId,
 		EndId:    *endId,
-		Delay:    time.Duration(10),
+		Delay:    10 * time.Second,
 		IdToSkip: []int{},
 	}
 	err = sync(context.Background(), tpuRepo, esRepo, param)
 	if err != nil {
-		log.Fatal().Msgf("sync error", err)
+		log.Fatal().Err(err).Msg("Sync error")
 	}
 }
 

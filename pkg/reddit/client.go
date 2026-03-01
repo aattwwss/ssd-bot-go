@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -29,6 +30,7 @@ type Client struct {
 
 	accessToken          string
 	tokenExpireTimeMilli int64
+	mu                   sync.RWMutex
 }
 
 const (
@@ -64,6 +66,9 @@ func NewRedditClient(clientId, clientSecret, username, password, accessToken str
 }
 
 func (rc *Client) RefreshToken() error {
+	rc.mu.Lock()
+	defer rc.mu.Unlock()
+
 	now := time.Now()
 	durationFromExpire := time.UnixMilli(rc.tokenExpireTimeMilli).Sub(now).Minutes()
 	if durationFromExpire > 30 {
@@ -104,7 +109,7 @@ func (rc *Client) RefreshToken() error {
 	var tokenRes tokenRes
 	err = json.NewDecoder(resp.Body).Decode(&tokenRes)
 	if err != nil {
-		log.Error().Msgf("Error decoding response body:", err)
+		log.Error().Err(err).Msg("Error decoding response body")
 		return err
 	}
 
@@ -125,7 +130,9 @@ func (rc *Client) newRequest(method string, url string, body io.Reader) (*http.R
 		return nil, err
 	}
 
+	rc.mu.RLock()
 	req.Header.Add("Authorization", "bearer "+rc.accessToken)
+	rc.mu.RUnlock()
 	req.Header.Add("User-Agent", userAgent)
 	return req, nil
 }

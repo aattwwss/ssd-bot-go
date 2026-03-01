@@ -34,7 +34,7 @@ func GetInfo(es *elasticsearch.Client) {
 	var r map[string]interface{}
 	res, err := es.Info()
 	if err != nil {
-		log.Error().Msgf("Error getting response: %s", err)
+		log.Error().Err(err).Msg("Error getting response")
 	}
 	defer res.Body.Close()
 	// Check response status
@@ -43,12 +43,12 @@ func GetInfo(es *elasticsearch.Client) {
 	}
 	// Deserialize the response into a map.
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		log.Error().Msgf("Error parsing the response body: %s", err)
+		log.Error().Err(err).Msg("Error parsing the response body")
 	}
 	// Print client and server version numbers.
 	log.Info().Msgf("Client: %s", elasticsearch.Version)
 	log.Info().Msgf("Server: %s", r["version"].(map[string]interface{})["number"])
-	log.Info().Msgf(strings.Repeat("~", 37))
+	log.Info().Msg(strings.Repeat("~", 37))
 }
 
 type SearchResponse[T any] struct {

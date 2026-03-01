@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 )
 
 type response[T any] struct {
@@ -46,8 +48,7 @@ func (tpu *TpuRepository) FindById(ctx context.Context, id string) (*SSD, error)
 		return nil, nil
 	}
 	if tpuRes.Status != "success" {
-		fmt.Printf("%v", resp.StatusCode)
-		fmt.Printf("%v", tpuRes.Status)
+		log.Error().Msgf("TPU query failed - status: %s, message: %s, http status: %v", tpuRes.Status, tpuRes.Message, resp.StatusCode)
 		return nil, errors.New("tpu query status error: " + tpuRes.Status)
 	}
 	return &tpuRes.Result, nil
@@ -71,13 +72,31 @@ func (tpu *TpuRepository) SearchBasic(ctx context.Context, s string) ([]SSDBasic
 		return nil, nil
 	}
 	if tpuRes.Status != "success" {
-		return nil, errors.New("tpu lookup status error: " + err.Error())
+		return nil, errors.New("tpu lookup status error: " + tpuRes.Status)
 	}
 	return tpuRes.Result, nil
 }
 
 func (tpu *TpuRepository) Search(ctx context.Context, s string) ([]SSD, error) {
-	return nil, nil
+	basicList, err := tpu.SearchBasic(ctx, s)
+	if err != nil {
+		return nil, err
+	}
+	if basicList == nil {
+		return nil, nil
+	}
+
+	var ssds []SSD
+	for _, basic := range basicList {
+		ssd, err := tpu.FindById(ctx, basic.DriveID)
+		if err != nil {
+			return nil, err
+		}
+		if ssd != nil {
+			ssds = append(ssds, *ssd)
+		}
+	}
+	return ssds, nil
 }
 
 func (tpu *TpuRepository) Insert(ctx context.Context, ssd SSD) error {

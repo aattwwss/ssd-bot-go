@@ -41,7 +41,7 @@ func (rc *Client) GetUserNewestComments(limit int) ([]UserComment, error) {
 	var listing Listing[UserComment]
 	err = json.NewDecoder(resp.Body).Decode(&listing)
 	if err != nil {
-		log.Error().Msgf("Error decoding response body:", err)
+		log.Error().Err(err).Msg("Error decoding response body")
 		return nil, err
 	}
 	var userComments []UserComment

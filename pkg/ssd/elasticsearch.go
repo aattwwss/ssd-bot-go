@@ -173,8 +173,8 @@ func (esRepo *EsRepository) Insert(ctx context.Context, ssd SSD) error {
 func (esRepo *EsRepository) doSearch(ctx context.Context, query map[string]interface{}, payload any) error {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		log.Error().Msgf("Error encoding query: %s", err)
-		return errors.New("error decoding query")
+		log.Error().Err(err).Msg("Error encoding query")
+		return errors.New("error encoding query")
 	}
 	es := esRepo.EsClient
 	res, err := es.Search(

@@ -40,7 +40,10 @@ func main() {
 	if err != nil {
 		log.Fatal().Msgf("Init reddit client error: %v", err)
 	}
-	es, _ := elasticutil.NewElasticsearchClient(cfg.EsAddress)
+	es, err := elasticutil.NewElasticsearchClient(cfg.EsAddress)
+	if err != nil {
+		log.Fatal().Msgf("Init elasticsearch client error: %v", err)
+	}
 	esRepo := ssd.NewEsRepository(es, "ssd-index")
 	// doTest(esRepo)
 	for {

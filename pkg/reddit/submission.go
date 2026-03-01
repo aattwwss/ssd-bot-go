@@ -39,7 +39,7 @@ func (rc *Client) GetNewSubmissions(subreddit string, limit int) ([]Submission, 
 	var listings Listing[Submission]
 	err = json.NewDecoder(resp.Body).Decode(&listings)
 	if err != nil {
-		log.Error().Msgf("Error decoding response body:", err)
+		log.Error().Err(err).Msg("Error decoding response body")
 		return nil, err
 	}
 	var posts []Submission
@@ -82,8 +82,12 @@ func (rc *Client) GetCommentsBySubmissionId(submissionId string, limit int) ([]S
 	var listings []Listing[SubmissionComment]
 	err = json.NewDecoder(resp.Body).Decode(&listings)
 	if err != nil {
-		log.Error().Msgf("Error decoding response body:", err)
+		log.Error().Err(err).Msg("Error decoding response body")
 		return nil, err
+	}
+	if len(listings) < 2 {
+		log.Error().Msgf("Expected at least 2 listings, got %d", len(listings))
+		return nil, errors.New("invalid response format: expected at least 2 listings")
 	}
 	var submissionComments []SubmissionComment
 	// hardcoding to use the 2nd element as the first is the post information
@@ -102,7 +106,7 @@ func (rc *Client) SubmitComment(postId, text string) error {
 	req, err := rc.newRequest("POST", "https://oauth.reddit.com/api/comment", strings.NewReader(data.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if err != nil {
-		log.Error().Msgf("Error creating request: %v", err)
+		log.Error().Err(err).Msg("Error creating request")
 		return err
 	}
 	resp, err := rc.httpClient.Do(req)
