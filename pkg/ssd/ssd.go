@@ -57,14 +57,14 @@ type SSDBasic struct {
 	FormFactor   string `json:"formFactor"`
 }
 
-func (ssd SSD) getHMBSize() string {
+func (ssd SSD) GetHMBSize() string {
 	if ssd.Hmb == "Unknown" {
 		return "N/A"
 	}
 	return ssd.Hmb
 }
 
-func (ssd SSD) getDramSize() string {
+func (ssd SSD) GetDramSize() string {
 	if ssd.Dram == "Unknown" {
 		return "N/A"
 	}
@@ -74,7 +74,6 @@ func (ssd SSD) getDramSize() string {
 // ToMarkdown converts SSD to Markdown format to support
 // formatting in a reddit comment submission
 func (ssd SSD) ToMarkdown() string {
-
 	ref := fmt.Sprintf(
 		"[^(TechPowerup Database)](%s) ^| [^( Github)](%s) ^| [^(Issues)](%s)",
 		"https://www.techpowerup.com/ssd-specs",
@@ -87,8 +86,8 @@ func (ssd SSD) ToMarkdown() string {
 		fmt.Sprintf("* Interface: **%s**", ssd.Interface),
 		fmt.Sprintf("* Form Factor: **%s**", ssd.FormFactor),
 		fmt.Sprintf("* Controller: **%s %s**", ssd.Controller.Manufacturer, ssd.Controller.Name),
-		fmt.Sprintf("* DRAM: **%s**", ssd.getDramSize()),
-		fmt.Sprintf("* HMB: **%s**", ssd.getHMBSize()),
+		fmt.Sprintf("* DRAM: **%s**", ssd.GetDramSize()),
+		fmt.Sprintf("* HMB: **%s**", ssd.GetHMBSize()),
 		fmt.Sprintf("* NAND Brand: **%s**", ssd.Flash.Manufacturer),
 		fmt.Sprintf("* NAND Type: **%s**", ssd.Flash.Type),
 		fmt.Sprintf("* R/W: **%s - %s**", ssd.SeqRead, ssd.SeqWrite),

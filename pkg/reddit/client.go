@@ -3,6 +3,7 @@ package reddit
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -18,7 +19,7 @@ const (
 	httpTimeout            = 10 * time.Second
 	tokenRefreshThreshold  = 30 // minutes
 	maxRetryAttempts       = 5
-	initialRetryDelay      = 1 * time.Minute
+	initialRetryDelay      = 500 * time.Millisecond
 )
 
 type tokenRes struct {
@@ -105,7 +106,7 @@ func (rc *Client) RefreshToken() error {
 	}
 	if resp.StatusCode/100 != 2 {
 		log.Error().Msgf("Error request: %v", resp.Status)
-		return errors.New("Received non OK status code: " + resp.Status)
+		return fmt.Errorf("received non OK status code: %s", resp.Status)
 	}
 
 	defer resp.Body.Close()

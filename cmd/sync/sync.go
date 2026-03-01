@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"flag"
+	"slices"
+
 	"github.com/aattwwss/ssd-bot-go/internal/config"
 	"github.com/aattwwss/ssd-bot-go/pkg/ssd"
 	"strconv"
@@ -64,7 +66,7 @@ func main() {
 
 func sync(ctx context.Context, source ssd.Repository, destination ssd.Repository, s syncParam) error {
 	for id := s.StartId; id <= s.EndId; id++ {
-		if contains(s.IdToSkip, id) {
+		if slices.Contains(s.IdToSkip, id) {
 			log.Info().Msgf("Skipping id: %v", id)
 			continue
 		}
@@ -88,13 +90,4 @@ func sync(ctx context.Context, source ssd.Repository, destination ssd.Repository
 		time.Sleep(s.Delay)
 	}
 	return nil
-}
-
-func contains[T comparable](arr []T, element T) bool {
-	for _, item := range arr {
-		if item == element {
-			return true
-		}
-	}
-	return false
 }

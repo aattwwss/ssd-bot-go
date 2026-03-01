@@ -2,7 +2,6 @@ package reddit
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -32,7 +31,7 @@ func (rc *Client) GetNewSubmissions(subreddit string, limit int) ([]Submission, 
 	}
 	if resp.StatusCode/100 != 2 {
 		log.Error().Msgf("Error request: %v", resp.Status)
-		return nil, errors.New("Received non OK status code: " + resp.Status)
+		return nil, fmt.Errorf("received non OK status code: %s", resp.Status)
 	}
 	defer resp.Body.Close()
 
@@ -75,7 +74,7 @@ func (rc *Client) GetCommentsBySubmissionId(submissionId string, limit int) ([]S
 	}
 	if resp.StatusCode/100 != 2 {
 		log.Error().Msgf("Error request: %v", resp.Status)
-		return nil, errors.New("Received non OK status code: " + resp.Status)
+		return nil, fmt.Errorf("received non OK status code: %s", resp.Status)
 	}
 	defer resp.Body.Close()
 
@@ -87,7 +86,7 @@ func (rc *Client) GetCommentsBySubmissionId(submissionId string, limit int) ([]S
 	}
 	if len(listings) < 2 {
 		log.Error().Msgf("Expected at least 2 listings, got %d", len(listings))
-		return nil, errors.New("invalid response format: expected at least 2 listings")
+		return nil, fmt.Errorf("invalid response format: expected at least 2 listings, got %d", len(listings))
 	}
 	var submissionComments []SubmissionComment
 	// hardcoding to use the 2nd element as the first is the post information
@@ -116,7 +115,7 @@ func (rc *Client) SubmitComment(postId, text string) error {
 	}
 	if resp.StatusCode/100 != 2 {
 		log.Error().Msgf("Error request: %v", resp.Status)
-		return errors.New("Received non OK status code: " + resp.Status)
+		return fmt.Errorf("received non OK status code: %s", resp.Status)
 	}
 	defer resp.Body.Close()
 	return nil
