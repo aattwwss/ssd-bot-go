@@ -134,8 +134,7 @@ func (esRepo *EsRepository) Search(ctx context.Context, searchQuery string) ([]S
 }
 
 func (esRepo *EsRepository) Update(ctx context.Context, ssd SSD) error {
-	//TODO implement this
-	return nil
+	return errors.New("EsRepository.Update is not implemented")
 }
 
 func (esRepo *EsRepository) Insert(ctx context.Context, ssd SSD) error {

@@ -100,11 +100,9 @@ func (tpu *TpuRepository) Search(ctx context.Context, s string) ([]SSD, error) {
 }
 
 func (tpu *TpuRepository) Insert(ctx context.Context, ssd SSD) error {
-	//TODO implement this
-	return nil
+	return errors.New("TpuRepository.Insert is not implemented")
 }
 
 func (tpu *TpuRepository) Update(ctx context.Context, ssd SSD) error {
-	//TODO implement this
-	return nil
+	return errors.New("TpuRepository.Update is not implemented")
 }

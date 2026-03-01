@@ -22,7 +22,10 @@ import (
 )
 
 const (
-	LINK_PREFIX = "t3_"
+	LINK_PREFIX       = "t3_"
+	ES_INDEX          = "ssd-index"
+	POLL_INTERVAL     = 15 * time.Minute
+	COMMENT_RATE_LIMIT = 1 * time.Second
 )
 
 func main() {
@@ -44,14 +47,14 @@ func main() {
 	if err != nil {
 		log.Fatal().Msgf("Init elasticsearch client error: %v", err)
 	}
-	esRepo := ssd.NewEsRepository(es, "ssd-index")
+	esRepo := ssd.NewEsRepository(es, ES_INDEX)
 	// doTest(esRepo)
 	for {
 		err = run(context.Background(), cfg, rc, esRepo)
 		if err != nil {
 			log.Error().Msgf("Error during run: %v", err)
 		}
-		time.Sleep(15 * time.Minute)
+		time.Sleep(POLL_INTERVAL)
 	}
 }
 
@@ -123,7 +126,7 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 		}
 		log.Info().Msgf("Post submitted for: %v", found)
 		//rate limit submission of post to prevent getting rejected
-		time.Sleep(1 * time.Second)
+		time.Sleep(COMMENT_RATE_LIMIT)
 	}
 	log.Info().Msg("End searching...")
 	return nil

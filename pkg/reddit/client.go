@@ -13,6 +13,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	userAgent              = "SSD bot v2.0 by /u/_SSD_BOT_ github.com/aattwwss/ssd-bot-go" // need to set user agent to prevent getting blocked by reddit
+	httpTimeout            = 10 * time.Second
+	tokenRefreshThreshold  = 30 // minutes
+	maxRetryAttempts       = 5
+	initialRetryDelay      = 1 * time.Minute
+)
+
 type tokenRes struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
@@ -33,17 +41,13 @@ type Client struct {
 	mu                   sync.RWMutex
 }
 
-const (
-	userAgent = "SSD bot v2.0 by /u/_SSD_BOT_ github.com/aattwwss/ssd-bot-go" //need to set user agent to prevent getting blocked by reddit
-)
-
 func NewRedditClient(clientId, clientSecret, username, password, accessToken string, expireTimeMilli int64, overrideOldBot bool) (*Client, error) {
 	if clientId == "" || clientSecret == "" || username == "" || password == "" {
 		return nil, errors.New("clientId, clientSecret, username, password cannot be empty")
 	}
 
 	httpClient := &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: httpTimeout,
 	}
 
 	rc := Client{
@@ -71,7 +75,7 @@ func (rc *Client) RefreshToken() error {
 
 	now := time.Now()
 	durationFromExpire := time.UnixMilli(rc.tokenExpireTimeMilli).Sub(now).Minutes()
-	if durationFromExpire > 30 {
+	if durationFromExpire > tokenRefreshThreshold {
 		return nil
 	}
 	// Set the form data
@@ -94,7 +98,7 @@ func (rc *Client) RefreshToken() error {
 	req.SetBasicAuth(rc.clientId, rc.clientSecret)
 
 	// Send the request
-	resp, err := retryHttpRequest(rc.httpClient, req, 5, time.Minute)
+	resp, err := retryHttpRequest(rc.httpClient, req, maxRetryAttempts, initialRetryDelay)
 	if err != nil {
 		log.Error().Msgf("Error sending request: %v", err)
 		return err

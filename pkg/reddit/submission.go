@@ -123,7 +123,11 @@ func (rc *Client) SubmitComment(postId, text string) error {
 }
 
 func (rc *Client) IsCommentedByUser(submissionId string, author string) bool {
-	comments, _ := rc.GetCommentsBySubmissionId(submissionId, 100)
+	comments, err := rc.GetCommentsBySubmissionId(submissionId, 100)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get comments for checking author")
+		return false
+	}
 	for _, comment := range comments {
 		if comment.Author == author {
 			return true

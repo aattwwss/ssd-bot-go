@@ -14,6 +14,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	ES_INDEX          = "ssd-index"
+	DEFAULT_START_ID  = 1
+	DEFAULT_END_ID    = 1550
+	DEFAULT_SYNC_DELAY = 10 * time.Second
+)
+
 type syncParam struct {
 	StartId  int
 	EndId    int
@@ -32,21 +39,21 @@ func main() {
 		log.Fatal().Msgf("Parse env error: %v", err)
 	}
 	// Define command-line flags
-	startId := flag.Int("startId", 1, "Start ID to sync from")
-	endId := flag.Int("endId", 1550, "End ID to sync to")
+	startId := flag.Int("startId", DEFAULT_START_ID, "Start ID to sync from")
+	endId := flag.Int("endId", DEFAULT_END_ID, "End ID to sync to")
 	flag.Parse()
 
 	es, err := elasticutil.NewElasticsearchClient(cfg.EsAddress)
 	if err != nil {
 		log.Fatal().Msgf("Init elasticsearch client error: %v", err)
 	}
-	esRepo := ssd.NewEsRepository(es, "ssd-index")
+	esRepo := ssd.NewEsRepository(es, ES_INDEX)
 	tpuRepo := ssd.NewTpuRepository(cfg.TPUHost, cfg.TPUUsername, cfg.TPUSecret)
 
 	param := syncParam{
 		StartId:  *startId,
 		EndId:    *endId,
-		Delay:    10 * time.Second,
+		Delay:    DEFAULT_SYNC_DELAY,
 		IdToSkip: []int{},
 	}
 	err = sync(context.Background(), tpuRepo, esRepo, param)

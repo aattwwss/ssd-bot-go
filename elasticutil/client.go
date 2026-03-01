@@ -2,7 +2,6 @@ package elasticutil
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -23,7 +22,7 @@ func NewElasticsearchClient(address string) (*elasticsearch.Client, error) {
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, errors.New(fmt.Sprintf("es ping error: %s", res.String()))
+		return nil, fmt.Errorf("es ping error: %s", res.String())
 	} else {
 		log.Info().Msg("Elasticsearch connection successful!")
 	}
