@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"flag"
+	"slices"
+
 	"github.com/aattwwss/ssd-bot-go/internal/config"
 	"github.com/aattwwss/ssd-bot-go/pkg/ssd"
 	"strconv"
@@ -12,6 +14,13 @@ import (
 	"github.com/caarlos0/env/v8"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
+)
+
+const (
+	ES_INDEX          = "ssd-index"
+	DEFAULT_START_ID  = 1
+	DEFAULT_END_ID    = 1550
+	DEFAULT_SYNC_DELAY = 10 * time.Second
 )
 
 type syncParam struct {
@@ -32,29 +41,32 @@ func main() {
 		log.Fatal().Msgf("Parse env error: %v", err)
 	}
 	// Define command-line flags
-	startId := flag.Int("startId", 1, "Start ID to sync from")
-	endId := flag.Int("endId", 1550, "End ID to sync to")
+	startId := flag.Int("startId", DEFAULT_START_ID, "Start ID to sync from")
+	endId := flag.Int("endId", DEFAULT_END_ID, "End ID to sync to")
 	flag.Parse()
 
-	es, _ := elasticutil.NewElasticsearchClient(cfg.EsAddress)
-	esRepo := ssd.NewEsRepository(es, "ssd-index")
+	es, err := elasticutil.NewElasticsearchClient(cfg.EsAddress)
+	if err != nil {
+		log.Fatal().Msgf("Init elasticsearch client error: %v", err)
+	}
+	esRepo := ssd.NewEsRepository(es, ES_INDEX)
 	tpuRepo := ssd.NewTpuRepository(cfg.TPUHost, cfg.TPUUsername, cfg.TPUSecret)
 
 	param := syncParam{
 		StartId:  *startId,
 		EndId:    *endId,
-		Delay:    time.Duration(10),
-		IdToSkip: []int{},
+		Delay:    DEFAULT_SYNC_DELAY,
+		IdToSkip: nil,
 	}
 	err = sync(context.Background(), tpuRepo, esRepo, param)
 	if err != nil {
-		log.Fatal().Msgf("sync error", err)
+		log.Fatal().Err(err).Msg("Sync error")
 	}
 }
 
 func sync(ctx context.Context, source ssd.Repository, destination ssd.Repository, s syncParam) error {
 	for id := s.StartId; id <= s.EndId; id++ {
-		if contains(s.IdToSkip, id) {
+		if slices.Contains(s.IdToSkip, id) {
 			log.Info().Msgf("Skipping id: %v", id)
 			continue
 		}
@@ -78,13 +90,4 @@ func sync(ctx context.Context, source ssd.Repository, destination ssd.Repository
 		time.Sleep(s.Delay)
 	}
 	return nil
-}
-
-func contains[T comparable](arr []T, element T) bool {
-	for _, item := range arr {
-		if item == element {
-			return true
-		}
-	}
-	return false
 }

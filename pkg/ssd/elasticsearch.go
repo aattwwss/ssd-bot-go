@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -15,11 +16,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// EsRepository is an Elasticsearch implementation of the Repository interface.
 type EsRepository struct {
 	EsClient *elasticsearch.Client
 	Index    string
 }
 
+// NewEsRepository creates a new Elasticsearch repository instance.
 func NewEsRepository(esClient *elasticsearch.Client, index string) *EsRepository {
 	return &EsRepository{
 		EsClient: esClient,
@@ -134,8 +137,7 @@ func (esRepo *EsRepository) Search(ctx context.Context, searchQuery string) ([]S
 }
 
 func (esRepo *EsRepository) Update(ctx context.Context, ssd SSD) error {
-	//TODO implement this
-	return nil
+	return errors.New("EsRepository.Update is not implemented")
 }
 
 func (esRepo *EsRepository) Insert(ctx context.Context, ssd SSD) error {
@@ -173,8 +175,8 @@ func (esRepo *EsRepository) Insert(ctx context.Context, ssd SSD) error {
 func (esRepo *EsRepository) doSearch(ctx context.Context, query map[string]interface{}, payload any) error {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		log.Error().Msgf("Error encoding query: %s", err)
-		return errors.New("error decoding query")
+		log.Error().Err(err).Msg("Error encoding query")
+		return fmt.Errorf("encoding query: %w", err)
 	}
 	es := esRepo.EsClient
 	res, err := es.Search(
@@ -184,7 +186,7 @@ func (esRepo *EsRepository) doSearch(ctx context.Context, query map[string]inter
 	)
 	if err != nil {
 		log.Error().Msgf("Error getting response: %s", err)
-		return errors.New("search response error")
+		return fmt.Errorf("searching elasticsearch: %w", err)
 	}
 	defer res.Body.Close()
 
@@ -200,12 +202,12 @@ func (esRepo *EsRepository) doSearch(ctx context.Context, query map[string]inter
 				e["error"].(map[string]interface{})["reason"],
 			)
 		}
-		return errors.New("find by id response error")
+		return fmt.Errorf("elasticsearch response error: %s", res.Status())
 	}
 
 	if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
 		log.Error().Msgf("Error parsing the response body: %s", err)
-		return errors.New("search payload decode error")
+		return fmt.Errorf("decoding search response: %w", err)
 	}
 	return nil
 }

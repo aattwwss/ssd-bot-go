@@ -2,14 +2,23 @@ package reddit
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
+)
+
+const (
+	userAgent              = "SSD bot v2.0 by /u/_SSD_BOT_ github.com/aattwwss/ssd-bot-go" // need to set user agent to prevent getting blocked by reddit
+	httpTimeout            = 10 * time.Second
+	tokenRefreshThreshold  = 30 // minutes
+	maxRetryAttempts       = 5
+	initialRetryDelay      = 500 * time.Millisecond
 )
 
 type tokenRes struct {
@@ -19,6 +28,7 @@ type tokenRes struct {
 	Scope       string `json:"scope"`
 }
 
+// Client is a Reddit API client that handles authentication and requests.
 type Client struct {
 	httpClient     *http.Client
 	clientId       string
@@ -29,19 +39,17 @@ type Client struct {
 
 	accessToken          string
 	tokenExpireTimeMilli int64
+	mu                   sync.RWMutex
 }
 
-const (
-	userAgent = "SSD bot v2.0 by /u/_SSD_BOT_ github.com/aattwwss/ssd-bot-go" //need to set user agent to prevent getting blocked by reddit
-)
-
+// NewRedditClient creates a new Reddit client with the provided credentials.
 func NewRedditClient(clientId, clientSecret, username, password, accessToken string, expireTimeMilli int64, overrideOldBot bool) (*Client, error) {
 	if clientId == "" || clientSecret == "" || username == "" || password == "" {
-		return nil, errors.New("clientId, clientSecret, username, password cannot be empty")
+		return nil, fmt.Errorf("clientId, clientSecret, username, and password are required")
 	}
 
 	httpClient := &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: httpTimeout,
 	}
 
 	rc := Client{
@@ -64,9 +72,12 @@ func NewRedditClient(clientId, clientSecret, username, password, accessToken str
 }
 
 func (rc *Client) RefreshToken() error {
+	rc.mu.Lock()
+	defer rc.mu.Unlock()
+
 	now := time.Now()
 	durationFromExpire := time.UnixMilli(rc.tokenExpireTimeMilli).Sub(now).Minutes()
-	if durationFromExpire > 30 {
+	if durationFromExpire > tokenRefreshThreshold {
 		return nil
 	}
 	// Set the form data
@@ -89,14 +100,14 @@ func (rc *Client) RefreshToken() error {
 	req.SetBasicAuth(rc.clientId, rc.clientSecret)
 
 	// Send the request
-	resp, err := retryHttpRequest(rc.httpClient, req, 5, time.Minute)
+	resp, err := retryHttpRequest(rc.httpClient, req, maxRetryAttempts, initialRetryDelay)
 	if err != nil {
 		log.Error().Msgf("Error sending request: %v", err)
 		return err
 	}
 	if resp.StatusCode/100 != 2 {
 		log.Error().Msgf("Error request: %v", resp.Status)
-		return errors.New("Received non OK status code: " + resp.Status)
+		return fmt.Errorf("received non OK status code: %s", resp.Status)
 	}
 
 	defer resp.Body.Close()
@@ -104,7 +115,7 @@ func (rc *Client) RefreshToken() error {
 	var tokenRes tokenRes
 	err = json.NewDecoder(resp.Body).Decode(&tokenRes)
 	if err != nil {
-		log.Error().Msgf("Error decoding response body:", err)
+		log.Error().Err(err).Msg("Error decoding response body")
 		return err
 	}
 
@@ -125,7 +136,9 @@ func (rc *Client) newRequest(method string, url string, body io.Reader) (*http.R
 		return nil, err
 	}
 
+	rc.mu.RLock()
 	req.Header.Add("Authorization", "bearer "+rc.accessToken)
+	rc.mu.RUnlock()
 	req.Header.Add("User-Agent", userAgent)
 	return req, nil
 }
@@ -145,5 +158,5 @@ func retryHttpRequest(client *http.Client, req *http.Request, attempts int, slee
 		sleep *= 2 // increase delay exponentially
 	}
 
-	return nil, errors.New("http request exceeded retry attempts")
+	return nil, fmt.Errorf("http request exceeded %d retry attempts", attempts)
 }

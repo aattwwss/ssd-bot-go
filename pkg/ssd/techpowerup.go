@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 )
 
 type response[T any] struct {
@@ -14,12 +16,14 @@ type response[T any] struct {
 	Result  T      `json:"result"`
 }
 
+// TpuRepository is a TechPowerUp API implementation of the Repository interface.
 type TpuRepository struct {
 	host     string
 	username string
 	apikey   string
 }
 
+// NewTpuRepository creates a new TechPowerUp repository instance.
 func NewTpuRepository(host, username, apiKey string) *TpuRepository {
 	return &TpuRepository{
 		host:     host,
@@ -46,8 +50,7 @@ func (tpu *TpuRepository) FindById(ctx context.Context, id string) (*SSD, error)
 		return nil, nil
 	}
 	if tpuRes.Status != "success" {
-		fmt.Printf("%v", resp.StatusCode)
-		fmt.Printf("%v", tpuRes.Status)
+		log.Error().Msgf("TPU query failed - status: %s, message: %s, http status: %v", tpuRes.Status, tpuRes.Message, resp.StatusCode)
 		return nil, errors.New("tpu query status error: " + tpuRes.Status)
 	}
 	return &tpuRes.Result, nil
@@ -71,21 +74,37 @@ func (tpu *TpuRepository) SearchBasic(ctx context.Context, s string) ([]SSDBasic
 		return nil, nil
 	}
 	if tpuRes.Status != "success" {
-		return nil, errors.New("tpu lookup status error: " + err.Error())
+		return nil, errors.New("tpu lookup status error: " + tpuRes.Status)
 	}
 	return tpuRes.Result, nil
 }
 
 func (tpu *TpuRepository) Search(ctx context.Context, s string) ([]SSD, error) {
-	return nil, nil
+	basicList, err := tpu.SearchBasic(ctx, s)
+	if err != nil {
+		return nil, err
+	}
+	if basicList == nil {
+		return nil, nil
+	}
+
+	var ssds []SSD
+	for _, basic := range basicList {
+		ssd, err := tpu.FindById(ctx, basic.DriveID)
+		if err != nil {
+			return nil, err
+		}
+		if ssd != nil {
+			ssds = append(ssds, *ssd)
+		}
+	}
+	return ssds, nil
 }
 
 func (tpu *TpuRepository) Insert(ctx context.Context, ssd SSD) error {
-	//TODO implement this
-	return nil
+	return errors.New("TpuRepository.Insert is not implemented")
 }
 
 func (tpu *TpuRepository) Update(ctx context.Context, ssd SSD) error {
-	//TODO implement this
-	return nil
+	return errors.New("TpuRepository.Update is not implemented")
 }

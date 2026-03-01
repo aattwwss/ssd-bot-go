@@ -2,7 +2,6 @@ package reddit
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -10,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Submission represents a Reddit post/submission.
 type Submission struct {
 	ID            string `json:"id"`
 	Subreddit     string `json:"subreddit"`
@@ -18,6 +18,7 @@ type Submission struct {
 	LinkFlairText string `json:"link_flair_text"`
 }
 
+// GetNewSubmissions fetches the newest submissions from a subreddit.
 func (rc *Client) GetNewSubmissions(subreddit string, limit int) ([]Submission, error) {
 	redditUrl := fmt.Sprintf("https://oauth.reddit.com/r/%s/new?limit=%v", subreddit, limit)
 	req, err := rc.newRequest("GET", redditUrl, nil)
@@ -32,14 +33,14 @@ func (rc *Client) GetNewSubmissions(subreddit string, limit int) ([]Submission, 
 	}
 	if resp.StatusCode/100 != 2 {
 		log.Error().Msgf("Error request: %v", resp.Status)
-		return nil, errors.New("Received non OK status code: " + resp.Status)
+		return nil, fmt.Errorf("received non OK status code: %s", resp.Status)
 	}
 	defer resp.Body.Close()
 
 	var listings Listing[Submission]
 	err = json.NewDecoder(resp.Body).Decode(&listings)
 	if err != nil {
-		log.Error().Msgf("Error decoding response body:", err)
+		log.Error().Err(err).Msg("Error decoding response body")
 		return nil, err
 	}
 	var posts []Submission
@@ -49,6 +50,7 @@ func (rc *Client) GetNewSubmissions(subreddit string, limit int) ([]Submission, 
 	return posts, nil
 }
 
+// SubmissionComment represents a comment on a Reddit submission.
 type SubmissionComment struct {
 	SubredditID    string `json:"subreddit_id"`
 	Subreddit      string `json:"subreddit"`
@@ -61,6 +63,7 @@ type SubmissionComment struct {
 	IsSubmitter    bool   `json:"is_submitter"`
 }
 
+// GetCommentsBySubmissionId fetches comments for a specific submission.
 func (rc *Client) GetCommentsBySubmissionId(submissionId string, limit int) ([]SubmissionComment, error) {
 	redditUrl := fmt.Sprintf("https://oauth.reddit.com/comments/%s?limit=%v&depth=1", submissionId, limit)
 	req, err := rc.newRequest("GET", redditUrl, nil)
@@ -75,24 +78,29 @@ func (rc *Client) GetCommentsBySubmissionId(submissionId string, limit int) ([]S
 	}
 	if resp.StatusCode/100 != 2 {
 		log.Error().Msgf("Error request: %v", resp.Status)
-		return nil, errors.New("Received non OK status code: " + resp.Status)
+		return nil, fmt.Errorf("received non OK status code: %s", resp.Status)
 	}
 	defer resp.Body.Close()
 
 	var listings []Listing[SubmissionComment]
 	err = json.NewDecoder(resp.Body).Decode(&listings)
 	if err != nil {
-		log.Error().Msgf("Error decoding response body:", err)
+		log.Error().Err(err).Msg("Error decoding response body")
 		return nil, err
 	}
+	if len(listings) < 2 {
+		log.Error().Msgf("Expected at least 2 listings, got %d", len(listings))
+		return nil, fmt.Errorf("invalid response format: expected at least 2 listings, got %d", len(listings))
+	}
 	var submissionComments []SubmissionComment
-	// hardcoding to use the 2nd element as the first is the post information
+	// The second element contains comments (first element is the post itself)
 	for _, child := range listings[1].Data.Children {
 		submissionComments = append(submissionComments, child.Data)
 	}
 	return submissionComments, nil
 }
 
+// SubmitComment posts a comment on a submission.
 func (rc *Client) SubmitComment(postId, text string) error {
 	data := url.Values{}
 	data.Set("api_type", "json")
@@ -102,7 +110,7 @@ func (rc *Client) SubmitComment(postId, text string) error {
 	req, err := rc.newRequest("POST", "https://oauth.reddit.com/api/comment", strings.NewReader(data.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if err != nil {
-		log.Error().Msgf("Error creating request: %v", err)
+		log.Error().Err(err).Msg("Error creating request")
 		return err
 	}
 	resp, err := rc.httpClient.Do(req)
@@ -112,14 +120,19 @@ func (rc *Client) SubmitComment(postId, text string) error {
 	}
 	if resp.StatusCode/100 != 2 {
 		log.Error().Msgf("Error request: %v", resp.Status)
-		return errors.New("Received non OK status code: " + resp.Status)
+		return fmt.Errorf("received non OK status code: %s", resp.Status)
 	}
 	defer resp.Body.Close()
 	return nil
 }
 
+// IsCommentedByUser checks if a user has commented on a submission.
 func (rc *Client) IsCommentedByUser(submissionId string, author string) bool {
-	comments, _ := rc.GetCommentsBySubmissionId(submissionId, 100)
+	comments, err := rc.GetCommentsBySubmissionId(submissionId, 100)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get comments for checking author")
+		return false
+	}
 	for _, comment := range comments {
 		if comment.Author == author {
 			return true

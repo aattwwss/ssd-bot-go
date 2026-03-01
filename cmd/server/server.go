@@ -5,10 +5,12 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"os/signal"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/aattwwss/ssd-bot-go/internal/config"
@@ -22,7 +24,10 @@ import (
 )
 
 const (
-	LINK_PREFIX = "t3_"
+	LINK_PREFIX       = "t3_"
+	ES_INDEX          = "ssd-index"
+	POLL_INTERVAL     = 15 * time.Minute
+	COMMENT_RATE_LIMIT = 1 * time.Second
 )
 
 func main() {
@@ -40,15 +45,39 @@ func main() {
 	if err != nil {
 		log.Fatal().Msgf("Init reddit client error: %v", err)
 	}
-	es, _ := elasticutil.NewElasticsearchClient(cfg.EsAddress)
-	esRepo := ssd.NewEsRepository(es, "ssd-index")
+	es, err := elasticutil.NewElasticsearchClient(cfg.EsAddress)
+	if err != nil {
+		log.Fatal().Msgf("Init elasticsearch client error: %v", err)
+	}
+	esRepo := ssd.NewEsRepository(es, ES_INDEX)
+
+	// Set up signal handling for graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Start a goroutine to handle shutdown signals
+	go func() {
+		sig := <-sigChan
+		log.Info().Msgf("Received signal %v, shutting down...", sig)
+		cancel()
+	}()
+
 	// doTest(esRepo)
 	for {
-		err = run(context.Background(), cfg, rc, esRepo)
-		if err != nil {
-			log.Error().Msgf("Error during run: %v", err)
+		select {
+		case <-ctx.Done():
+			log.Info().Msg("Shutdown requested, exiting...")
+			return
+		default:
+			err = run(ctx, cfg, rc, esRepo)
+			if err != nil {
+				log.Error().Msgf("Error during run: %v", err)
+			}
+			time.Sleep(POLL_INTERVAL)
 		}
-		time.Sleep(15 * time.Minute)
 	}
 }
 
@@ -106,9 +135,21 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 			iName := strings.ReplaceAll(ssdList[i].Name, "(w/ Heatsink)", "")
 			jName := strings.ReplaceAll(ssdList[j].Name, "(w/ Heatsink)", "")
 			if len(iName) == len(jName) {
-				numI, _ := strconv.Atoi(ssdList[i].DriveID)
-				numJ, _ := strconv.Atoi(ssdList[j].DriveID)
-				return numI > numJ
+				numI, errI := strconv.Atoi(ssdList[i].DriveID)
+				numJ, errJ := strconv.Atoi(ssdList[j].DriveID)
+				// If both are valid integers, compare numerically
+				if errI == nil && errJ == nil {
+					return numI > numJ
+				}
+				// If only one is valid, prefer the valid one
+				if errI == nil {
+					return true
+				}
+				if errJ == nil {
+					return false
+				}
+				// If neither is valid, fall back to string comparison
+				return ssdList[i].DriveID > ssdList[j].DriveID
 			}
 			return len(iName) > len(jName)
 		})
@@ -120,7 +161,7 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 		}
 		log.Info().Msgf("Post submitted for: %v", found)
 		//rate limit submission of post to prevent getting rejected
-		time.Sleep(1 * time.Second)
+		time.Sleep(COMMENT_RATE_LIMIT)
 	}
 	log.Info().Msg("End searching...")
 	return nil
@@ -132,9 +173,9 @@ func run(ctx context.Context, cfg config.Config, rc *reddit.Client, esRepo *ssd.
 func sanityCheck(searchQuery string, ssds []ssd.SSD) []ssd.SSD {
 	var filtered []ssd.SSD
 	for _, ssd := range ssds {
-		log.Info().Msgf("checking %s %s", ssd.Manufacturer, ssd.Name)
+		log.Debug().Msgf("checking %s %s", ssd.Manufacturer, ssd.Name)
 		if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(ssd.Manufacturer, " ", ""))) {
-			log.Info().Msgf("skipping %s %s because manufacturer is missing from search query", ssd.Manufacturer, ssd.Name)
+			log.Debug().Msgf("skipping %s %s because manufacturer is missing from search query", ssd.Manufacturer, ssd.Name)
 			continue
 		}
 		ssdName := strings.ReplaceAll(ssd.Name, "(w/ Heatsink)", "")
@@ -143,12 +184,12 @@ func sanityCheck(searchQuery string, ssds []ssd.SSD) []ssd.SSD {
 		for _, word := range words {
 			if !strings.Contains(strings.ToLower(strings.ReplaceAll(searchQuery, " ", "")), strings.ToLower(strings.ReplaceAll(word, " ", ""))) {
 				hasMissingWord = true
-				log.Info().Msgf("skipping %s %s because %s is missing from search query", ssd.Manufacturer, ssd.Name, word)
+				log.Debug().Msgf("skipping %s %s because %s is missing from search query", ssd.Manufacturer, ssd.Name, word)
 				break
 			}
 		}
 		if !hasMissingWord {
-			log.Info().Msgf("adding %s %s to filtered list", ssd.Manufacturer, ssd.Name)
+			log.Debug().Msgf("adding %s %s to filtered list", ssd.Manufacturer, ssd.Name)
 			filtered = append(filtered, ssd)
 		}
 	}
@@ -158,37 +199,44 @@ func sanityCheck(searchQuery string, ssds []ssd.SSD) []ssd.SSD {
 func cleanTitle(s string) string {
 	s = strings.ToLower(s)
 	s = regexp.MustCompile(`\[[^\]]+\]`).ReplaceAllString(s, "")
+
+	// Remove common strings that don't help with SSD identification
 	stringsToRemove := []string{"ssd", "m2", "m.2", "nvme", "pcie", "gen", "amazon"}
 	for _, toReplace := range stringsToRemove {
 		s = strings.ReplaceAll(s, toReplace, "")
 	}
 
+	// Build the result string with expansions
+	var builder strings.Builder
+	builder.WriteString(s)
+
+	// Add expansions for known abbreviations
 	stringsToReplace := map[string]string{
-		" wd":        " western digital",
-		"team group": " teamgroup",
-		"spatium":    " msi spatium",
-		"sn850x":     " western digital sn850x",
+		" wd":         " western digital",
+		"team group":  " teamgroup",
+		"spatium":     " msi spatium",
+		"sn850x":      " western digital sn850x",
 	}
 	for k, v := range stringsToReplace {
 		if strings.Contains(s, k) {
-			s = s + v
+			builder.WriteString(v)
 		}
 	}
-	return s
+	return builder.String()
 }
 
-func doTest(esRepo *ssd.EsRepository) {
+func doTest(esRepo *ssd.EsRepository) error {
 	// Open the input CSV file for reading
 	inputFile, err := os.Open("test/input.csv")
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("opening input file: %w", err)
 	}
 	defer inputFile.Close()
 
 	// Open a temporary output file for writing
 	outputFile, err := os.Create("test/output.csv")
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("creating output file: %w", err)
 	}
 	defer outputFile.Close()
 
@@ -197,7 +245,7 @@ func doTest(esRepo *ssd.EsRepository) {
 	reader.Comma = '\t'
 	records, err := reader.ReadAll()
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("reading CSV records: %w", err)
 	}
 
 	writer := csv.NewWriter(outputFile)
@@ -205,13 +253,20 @@ func doTest(esRepo *ssd.EsRepository) {
 
 	// Print each record
 	for _, record := range records {
-		ssds, _ := esRepo.Search(context.Background(), cleanTitle(record[1]))
+		ssds, err := esRepo.Search(context.Background(), cleanTitle(record[1]))
+		if err != nil {
+			log.Error().Err(err).Msgf("Error searching for SSD: %s", record[1])
+			continue
+		}
 		var modelAndName string
 		if len(ssds) != 0 {
 			modelAndName = fmt.Sprintf("%s %s", ssds[0].Manufacturer, ssds[0].Name)
 		}
 		record = append(record, modelAndName)
-		writer.Write(record)
+		if err := writer.Write(record); err != nil {
+			return fmt.Errorf("writing record: %w", err)
+		}
 		writer.Flush()
 	}
+	return nil
 }
