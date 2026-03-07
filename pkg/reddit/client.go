@@ -149,7 +149,7 @@ func retryHttpRequest(client *http.Client, req *http.Request, attempts int, slee
 
 	for i := 0; i < attempts; i++ {
 		resp, err = client.Do(req)
-		if err == nil || resp.StatusCode/100 == 2 {
+		if err == nil && resp.StatusCode/100 == 2 {
 			return resp, nil
 		}
 

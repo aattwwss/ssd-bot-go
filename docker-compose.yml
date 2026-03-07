@@ -1,4 +1,3 @@
-version: "3"
 services:
   ssd-bot-go:
     container_name: ssd-bot-go
